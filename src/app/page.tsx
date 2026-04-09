@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -22,19 +25,10 @@ export default function LoginPage() {
         body: JSON.stringify({ name, password }),
       });
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error);
-        return;
-      }
+      if (!res.ok) { setError(data.error); return; }
 
       sessionStorage.setItem("user", JSON.stringify(data));
-
-      if (data.role === "admin") {
-        router.push("/admin");
-      } else {
-        router.push("/exam");
-      }
+      router.push(data.role === "admin" ? "/admin" : "/exam");
     } catch {
       setError("通信エラーが発生しました");
     } finally {
@@ -43,56 +37,35 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex-1 flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-sm mx-auto p-8">
-        <h1 className="text-2xl font-bold text-center mb-2">Tomstest</h1>
-        <p className="text-gray-500 text-center mb-8">相場テスト</p>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              名前
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              パスワード
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              required
-            />
-          </div>
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "ログイン中..." : "ログイン"}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-gray-500">
-          はじめての方は{" "}
-          <button onClick={() => router.push("/register")} className="text-blue-600 hover:underline">
-            新規登録
-          </button>
-        </p>
-      </div>
+    <main className="flex-1 flex items-center justify-center">
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Tomstest</CardTitle>
+          <CardDescription>相場テスト</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">名前</label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">パスワード</label>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "ログイン中..." : "ログイン"}
+            </Button>
+          </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            はじめての方は{" "}
+            <button onClick={() => router.push("/register")} className="text-primary underline-offset-4 hover:underline">
+              新規登録
+            </button>
+          </p>
+        </CardContent>
+      </Card>
     </main>
   );
 }
