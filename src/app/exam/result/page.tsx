@@ -48,6 +48,14 @@ export default function ExamResultPage() {
             {result.score} / {result.total}
           </p>
           <p className="text-gray-500">正答率 {accuracy}%</p>
+          {(result as unknown as Record<string, unknown>).elapsed != null && (() => {
+            const el = (result as unknown as Record<string, unknown>).elapsed as number;
+            return (
+              <p className="text-gray-400 text-sm mt-2">
+                所要時間: {Math.floor(el / 60)}分{(el % 60).toString().padStart(2, "0")}秒
+              </p>
+            );
+          })()}
         </div>
 
         {/* 回答詳細 */}
