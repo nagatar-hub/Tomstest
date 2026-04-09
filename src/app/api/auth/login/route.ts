@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     const { data: user, error } = await supabase
       .from('quiz_user')
-      .select('id, name, role, password_hash')
+      .select('id, name, role, password_hash, avatar_url')
       .eq('name', name)
       .single();
 
@@ -45,6 +45,7 @@ export async function POST(request: Request) {
       id: user.id,
       name: user.name,
       role: user.role,
+      avatar_url: user.avatar_url,
     });
   } catch (err) {
     console.error('[auth/login]', err);

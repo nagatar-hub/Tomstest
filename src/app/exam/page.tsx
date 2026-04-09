@@ -226,7 +226,7 @@ export default function ExamStartPage() {
             }}>成績履歴 →</button>
             <div style={{ width: 1, height: 24, background: C.border }} />
             <button onClick={() => router.push("/exam/mypage")}
-              className="flex items-center justify-center transition-all duration-150 hover:scale-110"
+              className="flex items-center justify-center transition-all duration-150 hover:scale-110 overflow-hidden"
               title="MY PAGE"
               style={{
                 width: 34, height: 34, borderRadius: 10,
@@ -237,7 +237,12 @@ export default function ExamStartPage() {
                 border: "none", cursor: "pointer",
               }}
             >
-              {typeof window !== "undefined" ? (JSON.parse(sessionStorage.getItem("user") ?? '{"name":"?"}').name?.[0]?.toUpperCase() ?? "?") : "?"}
+              {(() => {
+                if (typeof window === "undefined") return "?";
+                const u = JSON.parse(sessionStorage.getItem("user") ?? "{}");
+                if (u.avatar_url) return <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />;
+                return u.name?.[0]?.toUpperCase() ?? "?";
+              })()}
             </button>
             <button onClick={() => { sessionStorage.clear(); router.push("/"); }} style={{
               background: "none", border: "none", color: C.textLight, fontSize: 12, cursor: "pointer",

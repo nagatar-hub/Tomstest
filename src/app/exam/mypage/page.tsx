@@ -12,7 +12,7 @@ const C = {
   green: "#15803d", red: "#b91c1c",
 };
 
-interface User { id: string; name: string; role: string }
+interface User { id: string; name: string; role: string; avatar_url?: string | null }
 interface SessionRow {
   id: string; difficulty: Difficulty; franchise: Franchise;
   total_questions: number; score: number; started_at: string; finished_at: string;
@@ -112,11 +112,38 @@ export default function MyPage() {
           }}>
             <div className="flex items-center gap-5 mb-6">
               {/* Avatar */}
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold" style={{
-                background: `linear-gradient(135deg, ${C.accent}, #f59e0b)`, color: "#fff",
-                boxShadow: `0 4px 16px ${C.accent}30`, fontFamily: "'DM Serif Display', serif",
-              }}>
-                {user.name[0].toUpperCase()}
+              <div className="relative group">
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt={user.name}
+                    className="w-20 h-20 rounded-2xl object-cover"
+                    style={{ boxShadow: `0 4px 16px ${C.accent}30` }} />
+                ) : (
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl font-bold" style={{
+                    background: `linear-gradient(135deg, ${C.accent}, #f59e0b)`, color: "#fff",
+                    boxShadow: `0 4px 16px ${C.accent}30`, fontFamily: "'DM Serif Display', serif",
+                  }}>
+                    {user.name[0].toUpperCase()}
+                  </div>
+                )}
+                <label className="absolute inset-0 rounded-2xl flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity duration-200" style={{
+                  background: "rgba(0,0,0,0.4)", color: "#fff", fontSize: 11, fontWeight: 600,
+                }}>
+                  <span>変更</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const form = new FormData();
+                    form.set("user_id", user.id);
+                    form.set("image", file);
+                    const res = await fetch("/api/auth/avatar", { method: "POST", body: form });
+                    if (res.ok) {
+                      const data = await res.json();
+                      const updated = { ...user, avatar_url: data.avatar_url };
+                      setUser(updated);
+                      sessionStorage.setItem("user", JSON.stringify(updated));
+                    }
+                  }} />
+                </label>
               </div>
               <div>
                 <h1 className="text-xl font-bold">{user.name}</h1>
