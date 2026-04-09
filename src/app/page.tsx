@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,7 +14,6 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -26,7 +22,6 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error); return; }
-
       sessionStorage.setItem("user", JSON.stringify(data));
       router.push(data.role === "admin" ? "/admin" : "/exam");
     } catch {
@@ -38,34 +33,77 @@ export default function LoginPage() {
 
   return (
     <main className="flex-1 flex items-center justify-center">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Tomstest</CardTitle>
-          <CardDescription>相場テスト</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">名前</label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} required />
+      <div className="w-full max-w-sm glass rounded-[18px] p-8 animate-fade-in-up">
+        {/* Brand */}
+        <div className="flex items-center justify-center gap-3 mb-8">
+          <div
+            className="w-10 h-10 rounded-[10px] flex items-center justify-center font-mono text-sm font-bold"
+            style={{
+              background: "linear-gradient(135deg, #292524 0%, #44403c 100%)",
+              color: "#f59e0b",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+            }}
+          >TS</div>
+          <div>
+            <div className="text-lg font-bold" style={{ color: "#292524" }}>TOM.Stocks</div>
+            <div className="text-[10px] font-semibold uppercase" style={{ color: "#b45309", letterSpacing: "0.12em" }}>
+              Quiz System
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">パスワード</label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "ログイン中..." : "ログイン"}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            はじめての方は{" "}
-            <button onClick={() => router.push("/register")} className="text-primary underline-offset-4 hover:underline">
-              新規登録
-            </button>
-          </p>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-[12px] font-semibold mb-1.5" style={{ color: "#78716c" }}>名前</label>
+            <input
+              type="text" value={name} onChange={(e) => setName(e.target.value)} required
+              className="w-full px-3 py-2.5 rounded-lg text-sm transition-all duration-150"
+              style={{
+                border: "1px solid #e8e3d9",
+                background: "#ffffff",
+                color: "#292524",
+                outline: "none",
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "#b45309"; e.target.style.boxShadow = "0 0 0 3px rgba(180,83,9,0.1)"; }}
+              onBlur={(e) => { e.target.style.borderColor = "#e8e3d9"; e.target.style.boxShadow = "none"; }}
+            />
+          </div>
+          <div>
+            <label className="block text-[12px] font-semibold mb-1.5" style={{ color: "#78716c" }}>パスワード</label>
+            <input
+              type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
+              className="w-full px-3 py-2.5 rounded-lg text-sm transition-all duration-150"
+              style={{
+                border: "1px solid #e8e3d9",
+                background: "#ffffff",
+                color: "#292524",
+                outline: "none",
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "#b45309"; e.target.style.boxShadow = "0 0 0 3px rgba(180,83,9,0.1)"; }}
+              onBlur={(e) => { e.target.style.borderColor = "#e8e3d9"; e.target.style.boxShadow = "none"; }}
+            />
+          </div>
+
+          {error && <p className="text-sm" style={{ color: "#b91c1c" }}>{error}</p>}
+
+          <button
+            type="submit" disabled={loading}
+            className="w-full py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-150 disabled:opacity-50"
+            style={{ background: "#b45309" }}
+            onMouseEnter={(e) => { if (!loading) (e.target as HTMLElement).style.background = "#f59e0b"; }}
+            onMouseLeave={(e) => { (e.target as HTMLElement).style.background = "#b45309"; }}
+          >
+            {loading ? "ログイン中..." : "ログイン"}
+          </button>
+        </form>
+
+        <p className="mt-5 text-center text-[12.5px]" style={{ color: "#a8a29e" }}>
+          はじめての方は{" "}
+          <button onClick={() => router.push("/register")} className="font-semibold hover:underline" style={{ color: "#b45309" }}>
+            新規登録
+          </button>
+        </p>
+      </div>
     </main>
   );
 }
