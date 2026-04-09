@@ -20,14 +20,14 @@ const PG_CONF: Record<string,{title:string;sub:string;opacity:number;overlay:str
   mypage:{title:"My Page",sub:"プロフィール — お知らせ",opacity:0.2,overlay:"rgba(124,58,237,0.25)"},
 };
 
-/* ── BG card positions (6 per page) ── */
+/* ── BG card positions (6 per page, spread to avoid overlap) ── */
 const BG_POS = [
-  {top:"3%",left:"1%",w:"19vw",rot:-4,spd:0.2},
-  {top:"-1%",left:"36%",w:"22vw",rot:3,spd:0.3},
-  {top:"2%",right:"2%",w:"18vw",rot:-2,spd:0.15},
-  {bottom:"1%",left:"5%",w:"21vw",rot:2,spd:0.35},
-  {bottom:"-2%",left:"40%",w:"17vw",rot:-3,spd:0.18},
-  {bottom:"2%",right:"3%",w:"20vw",rot:4,spd:0.28},
+  {top:"2%",left:"1%",w:"15vw",rot:-4,spd:0.2},
+  {top:"-3%",left:"38%",w:"16vw",rot:3,spd:0.3},
+  {top:"4%",right:"2%",w:"14vw",rot:-2,spd:0.15},
+  {bottom:"3%",left:"4%",w:"15vw",rot:2,spd:0.35},
+  {bottom:"-1%",left:"42%",w:"13vw",rot:-3,spd:0.18},
+  {bottom:"5%",right:"3%",w:"15vw",rot:4,spd:0.28},
 ];
 
 /* ── Shared UI ── */
@@ -233,25 +233,26 @@ export default function ProvaApp() {
 
         {/* ── HOME ── */}
         {isHome && (() => {
-          // 4列 × homeRows行、重ならないように間隔を確保
-          const colPositions = [2, 26, 52, 77]; // left %
-          const colWidths = [20, 22, 19, 18]; // vw
-          const colSpeeds = [0.3, 0.5, 0.35, 0.45];
-          const homeCards: {left:string;top:string;w:string;spd:number;at:number;imgIdx:number}[] = [];
+          // 3列 × homeRows行、余裕を持たせて重ならない
+          const colPositions = [3, 36, 70]; // left %
+          const colWidths = [16, 17, 15]; // vw — small enough to never overlap
+          const colSpeeds = [0.15, 0.25, 0.2];
+          const homeCards: {left:string;top:string;w:string;spd:number;revealPx:number;imgIdx:number}[] = [];
           for (let row=0; row<homeRows; row++) {
-            const baseTop = row * 55; // 55vh per row = no overlap with ~5:7 aspect cards
-            for (let col=0; col<4; col++) {
+            const baseTop = row * 45; // 45vh per row
+            for (let col=0; col<3; col++) {
+              const jitterTop = ((row*3+col)*7) % 5; // small deterministic offset
               homeCards.push({
-                left:`${colPositions[col]}%`,
-                top:`${baseTop + (col % 2 === 0 ? 2 : 6)}vh`,
+                left:`${colPositions[col] + ((row*3+col)*3)%4}%`,
+                top:`${baseTop + jitterTop}vh`,
                 w:`${colWidths[col]}vw`,
-                spd: colSpeeds[col] + (row%2)*0.05,
-                at: row <= 1 ? -20 : (row-1)*14,
-                imgIdx: cardImages.length > 0 ? (row*4+col) % cardImages.length : -1,
+                spd: colSpeeds[col] + (row%3)*0.03,
+                revealPx: row <= 1 ? 0 : (row-1) * 300, // px scroll to start reveal
+                imgIdx: cardImages.length > 0 ? (row*3+col) % cardImages.length : -1,
               });
             }
           }
-          const homeHeight = homeRows * 55 + 60;
+          const homeHeight = homeRows * 45 + 50;
           return (
           <div style={{position:"relative",width:"100%",height:`${homeHeight}vh`}}>
             {/* Title fixed center */}
@@ -262,26 +263,27 @@ export default function ProvaApp() {
             {/* Cards with diagonal reveal */}
             {homeCards.map((card,i) => {
               if (card.imgIdx < 0 || !cardImages[card.imgIdx]) return null;
-              const maxS = typeof window!=="undefined"?window.innerHeight*1.5:1200;
-              const scrollPct = maxS>0?(maxScrollY/maxS)*100:0;
-              const raw = (scrollPct-card.at)/20;
-              const reveal = Math.min(1,Math.max(0,raw));
+              // Reveal based on scrollY (real-time, not maxScrollY)
+              const effectiveScroll = Math.max(maxScrollY, scrollY);
+              const revealRange = 400; // px to fully reveal
+              const raw = (effectiveScroll - card.revealPx) / revealRange;
+              const reveal = Math.min(1, Math.max(0, raw));
               // Diagonal reveal: top-left to bottom-right
               let clip: string;
               if (reveal <= 0) clip = "polygon(0 0,0 0,0 0)";
               else if (reveal >= 1) clip = "none";
               else if (reveal < 0.5) {
-                const p = reveal * 2; // 0→1
+                const p = reveal * 2;
                 clip = `polygon(0 0, ${p*100}% 0, 0 ${p*100}%)`;
               } else {
-                const p = (reveal - 0.5) * 2; // 0→1
+                const p = (reveal - 0.5) * 2;
                 clip = `polygon(0 0, 100% 0, 100% ${p*100}%, ${p*100}% 100%, 0 100%)`;
               }
               return (
                 <div key={i} style={{
                   position:"absolute",left:card.left,top:card.top,width:card.w,aspectRatio:"5/7",
                   background:`${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
-                  clipPath:clip,transition:"clip-path 0.8s cubic-bezier(0.4,0,0.2,1)",
+                  clipPath:clip,
                   transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
                 }}>
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.25,pointerEvents:"none"}} />
@@ -317,7 +319,7 @@ export default function ProvaApp() {
             })}
 
             {/* Sticky content — does NOT scroll */}
-            <div style={{position:"sticky",top:0,height:"calc(100vh - 50px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"min(4vh,28px) min(3vw,24px)",zIndex:2}}>
+            <div style={{position:"sticky",top:0,height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"min(4vh,28px) min(3vw,24px)",zIndex:2}}>
               <div style={{textAlign:"center",marginBottom:"min(2.5vh,20px)"}}>
                 <div style={{fontSize:"min(12vw,140px)",fontWeight:"normal",fontFamily:"'Times New Roman',Times,serif",color:C.text,letterSpacing:"0.03em",lineHeight:0.85,textTransform:"uppercase"}}>{pgConf.title}</div>
                 <div style={{fontSize:"min(1.1vw,10px)",fontWeight:500,letterSpacing:"0.3em",color:C.textLight,marginTop:"min(1.5vh,12px)",fontFamily:"'IBM Plex Mono',monospace"}}>{pgConf.sub}</div>
@@ -347,7 +349,7 @@ export default function ProvaApp() {
                             cursor:"pointer",fontFamily:"'IBM Plex Mono','Noto Sans JP',monospace",transition:"all 0.15s",
                           }}>
                             {item.logo
-                              ? <img src={item.logo} alt={item.label} style={{height:"min(3.5vw,32px)",width:"auto",maxWidth:"100%",objectFit:"contain",filter:active?"none":"grayscale(40%)",transition:"filter 0.15s"}} />
+                              ? <img src={item.logo} alt={item.label} style={{height:"min(5vw,44px)",width:"auto",maxWidth:"100%",objectFit:"contain",filter:active?"none":"grayscale(40%)",transition:"filter 0.15s"}} />
                               : <span style={{fontSize:"min(2.5vw,22px)",filter:active?"none":"grayscale(40%)"}}>{item.icon}</span>
                             }
                             <span style={{fontSize:"min(1.2vw,11px)",fontWeight:active?700:450}}>{item.label}</span>
@@ -541,20 +543,18 @@ export default function ProvaApp() {
           </div>
         )}
 
-        {/* ── Bottom Nav (fixed) ── */}
-        <div style={{position:"fixed",bottom:0,left:0,right:0,height:50,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",zIndex:30,background:"rgba(245,243,238,0.92)",backdropFilter:"blur(10px)",borderTop:`1px solid ${C.border}`}}>
-          <div style={{display:"flex"}}>
+        {/* ── Bottom Nav (buttons only, no bar) ── */}
+        <div style={{position:"fixed",bottom:16,left:24,right:24,display:"flex",alignItems:"center",justifyContent:"space-between",zIndex:30,pointerEvents:"none"}}>
+          <div style={{display:"flex",pointerEvents:"auto"}}>
             {[{id:"quiz",l:"QUIZ"},{id:"test",l:"TEST"},{id:"review",l:"REVIEW"}].map((tab,i) => {
               const active = page===tab.id;
               const hov = hoveredTab===tab.id;
-              // On subpages: active tab becomes HOME button
               const label = active ? "HOME" : tab.l;
               const onClick = active ? ()=>setPage("home") : ()=>setPage(tab.id);
               return <button key={tab.id} onClick={onClick} onMouseEnter={()=>setHoveredTab(tab.id)} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 24px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,borderRight:i<2?"none":`1.5px solid ${C.text}`,background:active?C.text:hov?`${C.text}08`:C.bg,color:active?C.bg:C.text,transition:"all 0.15s"}}>{label}</button>;
             })}
           </div>
-          {isHome && <button onClick={handleLogout} style={{background:"none",border:"none",color:C.textLight,fontSize:10,cursor:"pointer",letterSpacing:"0.1em",fontFamily:"'IBM Plex Mono',monospace"}} onMouseEnter={e=>e.currentTarget.style.color=C.red} onMouseLeave={e=>e.currentTarget.style.color=C.textLight}>LOGOUT</button>}
-          <button onClick={()=>setPage(page==="mypage"?"home":"mypage")} onMouseEnter={()=>setHoveredTab("mypage")} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,background:page==="mypage"?C.text:hoveredTab==="mypage"?`${C.text}08`:C.bg,color:page==="mypage"?C.bg:C.text,transition:"all 0.15s",position:"relative"}}>
+          <button onClick={()=>setPage(page==="mypage"?"home":"mypage")} onMouseEnter={()=>setHoveredTab("mypage")} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,background:page==="mypage"?C.text:hoveredTab==="mypage"?`${C.text}08`:C.bg,color:page==="mypage"?C.bg:C.text,transition:"all 0.15s",position:"relative",pointerEvents:"auto"}}>
             {page==="mypage"?"HOME":"MY PAGE"}
             {page!=="mypage"&&announcements.length>0 && <div style={{position:"absolute",top:-7,right:-7,width:18,height:18,borderRadius:"50%",background:C.red,color:"#fff",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",animation:"badgePulse 2s ease infinite"}}>{announcements.length}</div>}
           </button>
