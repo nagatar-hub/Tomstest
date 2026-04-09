@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "ダッシュボード", href: "/admin", icon: "📊" },
-  { label: "カードDB", href: "/admin/card-db", icon: "🗂️" },
   { label: "模擬テスト", href: "/admin/trial", icon: "🎯" },
   { label: "共通テスト", href: "/admin/common-tests", icon: "📝" },
+  { label: "カードDB", href: "/admin/card-db", icon: "🗂️" },
   { label: "問題DB", href: "/admin/question-bank", icon: "📚" },
   { label: "個別登録", href: "/admin/custom-cards", icon: "🃏" },
   { label: "お知らせ", href: "/admin/announcements", icon: "📢" },
