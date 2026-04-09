@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
     let query = supabase
       .from('quiz_card')
-      .select('id, franchise, card_name, grade, price, image_url')
+      .select('id, franchise, card_name, grade, price, image_url, rarity')
       .gt('price', 0)
       .order('price', { ascending: false })
       .limit(limit);

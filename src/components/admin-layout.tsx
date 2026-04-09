@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
   { label: "ダッシュボード", href: "/admin", icon: "📊" },
+  { label: "カードDB", href: "/admin/card-db", icon: "🗂️" },
   { label: "模擬テスト", href: "/admin/trial", icon: "🎯" },
   { label: "共通テスト", href: "/admin/common-tests", icon: "📝" },
   { label: "問題DB", href: "/admin/question-bank", icon: "📚" },
