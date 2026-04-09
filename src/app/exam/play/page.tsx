@@ -116,7 +116,9 @@ export default function ExamPlayPage() {
               ? "かんたん"
               : difficulty === "normal"
                 ? "ノーマル"
-                : "むずかしい"}
+                : difficulty === "hard"
+                  ? "むずかしい"
+                  : "共通テスト"}
           </span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -182,7 +184,7 @@ export default function ExamPlayPage() {
             この商品の買取価格は？
           </p>
 
-          {difficulty === "easy" && currentQuestion.choices ? (
+          {currentQuestion.choices && currentQuestion.choices.length > 0 ? (
             /* 4択モード */
             <div className="grid grid-cols-2 gap-3">
               {currentQuestion.choices.map((choice) => (

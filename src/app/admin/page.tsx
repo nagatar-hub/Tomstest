@@ -87,6 +87,12 @@ export default function AdminPage() {
               模擬テスト
             </button>
             <button
+              onClick={() => router.push("/admin/common-tests")}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700"
+            >
+              共通テスト
+            </button>
+            <button
               onClick={() => router.push("/admin/settings")}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300"
             >
