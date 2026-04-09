@@ -109,13 +109,13 @@ export default function AdminPage() {
           <div className="bg-white rounded-xl border p-4 text-center">
             <p className="text-sm text-gray-500">全体正答率</p>
             <p className="text-3xl font-bold text-blue-600">
-              {stats.overall_accuracy.accuracy}%
+              {stats.overall_accuracy.accuracy ?? 0}%
             </p>
           </div>
           <div className="bg-white rounded-xl border p-4 text-center">
             <p className="text-sm text-gray-500">総回答数</p>
             <p className="text-3xl font-bold">
-              {stats.overall_accuracy.total_answers.toLocaleString()}
+              {(stats.overall_accuracy.total_answers ?? 0).toLocaleString()}
             </p>
           </div>
           <div className="bg-white rounded-xl border p-4 text-center">
