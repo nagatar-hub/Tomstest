@@ -6,8 +6,8 @@
 
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-server';
-import { pickQuestions, generateChoices } from '@/lib/quiz-logic';
-import type { Difficulty, Franchise, QuizCard, Question } from '@/lib/types';
+import { pickQuestions, generateChoices, getToleranceAmount } from '@/lib/quiz-logic';
+import type { Difficulty, Franchise, QuizCard, Question, Tolerance } from '@/lib/types';
 
 const QUESTION_COUNT = 10;
 
@@ -56,15 +56,30 @@ export async function POST(request: Request) {
 
     if (sessionErr) throw sessionErr;
 
+    // 4択用: ノーマルの許容範囲を取得（刻み単位として使用）
+    let tolerances: Tolerance[] = [];
+    if (difficulty === 'easy') {
+      const { data } = await supabase
+        .from('tolerance')
+        .select('*')
+        .eq('difficulty', 'normal');
+      tolerances = (data ?? []) as Tolerance[];
+    }
+
     // 出題データ構築
-    const questions: Question[] = selected.map((card) => ({
-      quiz_card_id: card.id,
-      card_name: card.card_name,
-      grade: card.grade,
-      image_url: card.image_url,
-      franchise: card.franchise as Franchise,
-      ...(difficulty === 'easy' ? { choices: generateChoices(card.price) } : {}),
-    }));
+    const questions: Question[] = selected.map((card) => {
+      const toleranceAmount = difficulty === 'easy'
+        ? getToleranceAmount(tolerances, 'normal', card.price)
+        : 0;
+      return {
+        quiz_card_id: card.id,
+        card_name: card.card_name,
+        grade: card.grade,
+        image_url: card.image_url,
+        franchise: card.franchise as Franchise,
+        ...(difficulty === 'easy' ? { choices: generateChoices(card.price, toleranceAmount) } : {}),
+      };
+    });
 
     return NextResponse.json({
       session_id: session.id,

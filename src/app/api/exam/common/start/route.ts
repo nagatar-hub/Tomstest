@@ -6,8 +6,8 @@
 
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabase-server';
-import { generateChoices } from '@/lib/quiz-logic';
-import type { Question } from '@/lib/types';
+import { generateChoices, getToleranceAmount } from '@/lib/quiz-logic';
+import type { Question, Tolerance } from '@/lib/types';
 
 export async function POST(request: Request) {
   try {
@@ -62,9 +62,18 @@ export async function POST(request: Request) {
       .single();
     if (sessErr) throw sessErr;
 
+    // 4択用: ノーマルの許容範囲を取得
+    const { data: tolData } = await supabase
+      .from('tolerance')
+      .select('*')
+      .eq('difficulty', 'normal');
+    const tolerances = (tolData ?? []) as Tolerance[];
+
     // 出題データ構築
     const questionData: Question[] = questions.map((q) => {
       const card = q.quiz_card as unknown as Record<string, unknown>;
+      const price = card.price as number;
+      const toleranceAmount = getToleranceAmount(tolerances, 'normal', price);
       return {
         quiz_card_id: card.id as string,
         card_name: card.card_name as string,
@@ -72,7 +81,7 @@ export async function POST(request: Request) {
         image_url: card.image_url as string | null,
         franchise: card.franchise as Question['franchise'],
         ...(q.question_type === 'choice'
-          ? { choices: generateChoices(card.price as number) }
+          ? { choices: generateChoices(price, toleranceAmount) }
           : {}),
       };
     });
