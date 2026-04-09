@@ -217,33 +217,19 @@ export default function ExamStartPage() {
             {/* 難易度 */}
             <div>
               <label className="block text-[11px] font-semibold uppercase mb-2" style={{ color: "#a8a29e", letterSpacing: "0.06em" }}>難易度</label>
-              <div className="grid grid-cols-3 gap-2">
-                {DIFFICULTIES.map((d) => {
-                  const locked = d === "hard" && !hardUnlocked;
-                  return (
-                    <button key={d}
-                      onClick={() => { if (!locked) setDifficulty(d); }}
-                      disabled={locked}
-                      className={`py-2.5 px-2 rounded-[9px] border-[1.5px] text-[13px] transition-all duration-150 relative ${
-                        locked
-                          ? "border-[#e8e3d9] bg-[#f3f0ea] text-[#a8a29e] cursor-not-allowed opacity-60"
-                          : difficulty === d ? activeBtn : inactiveBtn
-                      }`}>
-                      {locked ? "🔒 " : ""}{DIFFICULTY_JA[d]}
-                    </button>
-                  );
-                })}
+              <div className={`grid gap-2 ${hardUnlocked ? "grid-cols-3" : "grid-cols-2"}`}>
+                {DIFFICULTIES.filter((d) => d !== "hard" || hardUnlocked).map((d) => (
+                  <button key={d} onClick={() => setDifficulty(d)}
+                    className={`py-2.5 px-2 rounded-[9px] border-[1.5px] text-[13px] transition-all duration-150 ${difficulty === d ? activeBtn : inactiveBtn}`}>
+                    {DIFFICULTY_JA[d]}
+                  </button>
+                ))}
               </div>
               <p className="mt-2 text-[11px]" style={{ color: "#a8a29e" }}>
                 {difficulty === "easy" && "4択から選ぶモードです"}
                 {difficulty === "normal" && "価格を直接入力します（許容範囲あり）"}
                 {difficulty === "hard" && "価格を直接入力します（許容範囲が狭い）"}
               </p>
-              {!hardUnlocked && (
-                <p className="mt-1 text-[10.5px] font-mono" style={{ color: "#b45309" }}>
-                  むずかしいを解放するには: ノーマルをあと{Math.max(0, 20 - normalAnswered)}問解こう
-                </p>
-              )}
             </div>
 
             <button onClick={handleRandomStart} disabled={loading}
