@@ -20,14 +20,14 @@ const PG_CONF: Record<string,{title:string;sub:string;opacity:number;overlay:str
   mypage:{title:"My Page",sub:"プロフィール — お知らせ",opacity:0.2,overlay:"rgba(124,58,237,0.25)"},
 };
 
-/* ── BG card positions (6 per page, spread to avoid overlap) ── */
+/* ── BG card positions for subpages (6 cards, position:fixed, spread) ── */
 const BG_POS = [
-  {top:"2%",left:"1%",w:"15vw",rot:-4,spd:0.2},
-  {top:"-3%",left:"38%",w:"16vw",rot:3,spd:0.3},
-  {top:"4%",right:"2%",w:"14vw",rot:-2,spd:0.15},
-  {bottom:"3%",left:"4%",w:"15vw",rot:2,spd:0.35},
-  {bottom:"-1%",left:"42%",w:"13vw",rot:-3,spd:0.18},
-  {bottom:"5%",right:"3%",w:"15vw",rot:4,spd:0.28},
+  {top:"2vh",left:"1vw",w:"15vw",rot:-4,spd:0.12},
+  {top:"-3vh",left:"36vw",w:"16vw",rot:3,spd:0.20},
+  {top:"5vh",left:"72vw",w:"14vw",rot:-2,spd:0.08},
+  {top:"52vh",left:"3vw",w:"15vw",rot:2,spd:0.22},
+  {top:"48vh",left:"40vw",w:"13vw",rot:-3,spd:0.10},
+  {top:"55vh",left:"74vw",w:"15vw",rot:4,spd:0.18},
 ];
 
 /* ── Shared UI ── */
@@ -60,6 +60,7 @@ export default function ProvaApp() {
   const [maxScrollY, setMaxScrollY] = useState(0);
   const [hoveredTab, setHoveredTab] = useState<string|null>(null);
   const [homeRows, setHomeRows] = useState(3);
+  const [subBgSeed, setSubBgSeed] = useState(0); // changes on page switch to shuffle BG
   const [avatarHover, setAvatarHover] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
@@ -139,6 +140,7 @@ export default function ProvaApp() {
     if (containerRef.current) containerRef.current.scrollTop = 0;
     setScrollY(0);
     if (page === "home") { setMaxScrollY(0); setHomeRows(3); }
+    else { setSubBgSeed(prev => prev + 1); }
   }, [page]);
 
   // Actions
@@ -233,36 +235,35 @@ export default function ProvaApp() {
 
         {/* ── HOME ── */}
         {isHome && (() => {
-          // Grid approach: each card occupies its own cell, guaranteed no overlap
-          // 3 columns, each card ~15vw wide (aspect 5:7 → ~21vw tall)
-          // Stagger: odd rows offset by half a cell
-          const cardW = 15; // vw
-          const cardH = cardW * 1.4; // vw (5:7 ratio)
-          const gapX = 6; // vw horizontal gap
-          const gapY = 4; // vw vertical gap
-          const cols = 3;
-          const totalW = cols * cardW + (cols-1) * gapX; // total grid width in vw
-          const startX = (100 - totalW) / 2; // center the grid
-          const speeds = [0.15, 0.25, 0.18];
+          // 4 columns, cards don't overlap — uniform parallax speed per row
+          const cardW = 14; // vw
+          const cardH = cardW * 1.4; // 19.6vw
+          const cols = 4;
+          const margin = 2; // vw margin on sides
+          const gap = (100 - margin*2 - cols*cardW) / (cols-1); // ~5.3vw
+          const rowH = cardH + 4; // vw — 4vw gap between rows
+          // ALL cards in same row share same speed → no relative vertical displacement within row
+          const rowSpeeds = [0.10, 0.13, 0.10, 0.13, 0.10, 0.13, 0.10, 0.13, 0.10, 0.13];
 
-          const homeCards: {left:string;top:string;w:string;spd:number;at:number;imgIdx:number}[] = [];
+          const homeCards: {left:number;top:number;w:number;spd:number;at:number;imgIdx:number}[] = [];
           for (let row = 0; row < homeRows; row++) {
-            const rowOffset = (row % 2) * ((cardW + gapX) / 2); // stagger odd rows
             for (let col = 0; col < cols; col++) {
-              const x = startX + rowOffset + col * (cardW + gapX);
-              if (x + cardW > 100) continue; // skip if overflows
-              const y = row * (cardH + gapY);
               homeCards.push({
-                left: `${x}vw`,
-                top: `${y}vw`,
-                w: `${cardW}vw`,
-                spd: speeds[col] + (row % 3) * 0.03,
-                at: row <= 1 ? -20 : (row - 1) * 12,
+                left: margin + col * (cardW + gap),
+                top: row * rowH,
+                w: cardW,
+                spd: rowSpeeds[row % rowSpeeds.length],
+                at: row <= 1 ? -20 : (row - 1) * 15,
                 imgIdx: cardImages.length > 0 ? (row * cols + col) % cardImages.length : -1,
               });
             }
           }
-          const homeHeight = homeRows * (cardH + gapY) + 20; // vw → use vw for height too
+          const homeHeight = homeRows * rowH + 30;
+          // Dynamic maxS based on actual scroll height
+          const maxS = containerRef.current
+            ? containerRef.current.scrollHeight - containerRef.current.clientHeight
+            : (typeof window !== "undefined" ? window.innerHeight * 1.5 : 1200);
+
           return (
           <div style={{position:"relative",width:"100%",height:`${homeHeight}vw`}}>
             <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",zIndex:1,pointerEvents:"none",textAlign:"center"}}>
@@ -271,9 +272,8 @@ export default function ProvaApp() {
             </div>
             {homeCards.map((card, i) => {
               if (card.imgIdx < 0 || !cardImages[card.imgIdx]) return null;
-              // Reveal: use maxScrollY so cards never disappear once revealed
-              const vh = typeof window !== "undefined" ? window.innerHeight : 900;
-              const scrollPct = vh > 0 ? (maxScrollY / (vh * 1.5)) * 100 : 0;
+              // Reveal: maxScrollY → percentage of total scroll → compare to card.at
+              const scrollPct = maxS > 0 ? (maxScrollY / maxS) * 100 : 0;
               const raw = (scrollPct - card.at) / 20;
               const reveal = Math.min(1, Math.max(0, raw));
               let clip: string;
@@ -281,18 +281,18 @@ export default function ProvaApp() {
               else if (reveal >= 1) clip = "none";
               else if (reveal < 0.5) {
                 const p = reveal * 2;
-                clip = `polygon(0 0, ${p * 100}% 0, 0 ${p * 100}%)`;
+                clip = `polygon(0 0, ${p*100}% 0, 0 ${p*100}%)`;
               } else {
                 const p = (reveal - 0.5) * 2;
-                clip = `polygon(0 0, 100% 0, 100% ${p * 100}%, ${p * 100}% 100%, 0 100%)`;
+                clip = `polygon(0 0, 100% 0, 100% ${p*100}%, ${p*100}% 100%, 0 100%)`;
               }
               return (
                 <div key={i} style={{
-                  position: "absolute", left: card.left, top: card.top, width: card.w, aspectRatio: "5/7",
-                  background: `${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
-                  clipPath: clip, transition: "clip-path 0.6s cubic-bezier(0.4,0,0.2,1)",
-                  transform: `translateY(${-scrollY * card.spd}px)`, zIndex: 2, overflow: "hidden",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+                  position:"absolute",left:`${card.left}vw`,top:`${card.top}vw`,width:`${card.w}vw`,aspectRatio:"5/7",
+                  background:`${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
+                  clipPath:clip,transition:"clip-path 0.5s ease-out",
+                  transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",
+                  boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
                 }}>
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.25,pointerEvents:"none"}} />
                 </div>
@@ -303,31 +303,35 @@ export default function ProvaApp() {
         })()}
 
         {/* ── Sub pages (QUIZ/TEST/REVIEW/MYPAGE) ── */}
+        {/* Spacer: creates scrollable area. BG and content are position:fixed */}
+        {!isHome && pgConf && <div style={{height:"280vh"}} />}
+
+        {/* ── Fixed BG layer (subpages only) — cards move with scroll ── */}
         {!isHome && pgConf && (
-          <div style={{position:"relative",width:"100%",height:"280vh"}}>
-            {/* Background: 6 cards with real images + theme overlay */}
+          <div style={{position:"fixed",top:0,left:0,width:"100vw",height:"100vh",zIndex:0,pointerEvents:"none",overflow:"hidden"}}>
             {BG_POS.map((bp,i) => {
-              const img = cardImages.length > 0 ? cardImages[i % cardImages.length] : null;
-              const pos: React.CSSProperties = {};
-              if ("top" in bp) pos.top = bp.top;
-              if ("bottom" in bp) pos.bottom = (bp as {bottom:string}).bottom;
-              if ("left" in bp) pos.left = (bp as {left:string}).left;
-              if ("right" in bp) pos.right = (bp as {right:string}).right;
+              // Shuffle images based on subBgSeed so they change on page switch
+              const imgIdx = cardImages.length > 0 ? (i + subBgSeed * 7) % cardImages.length : -1;
+              const img = imgIdx >= 0 ? cardImages[imgIdx] : null;
               return (
-                <div key={`${page}-${i}`} style={{
-                  position:"absolute",...pos,width:bp.w,aspectRatio:"5/7",
+                <div key={`${page}-${subBgSeed}-${i}`} style={{
+                  position:"absolute",top:bp.top,left:bp.left,width:bp.w,aspectRatio:"5/7",
                   background: img ? `${C.bg} url(${img}) center/contain no-repeat` : pgConf.overlay,
                   transform:`rotate(${bp.rot}deg) translateY(${-scrollY*bp.spd}px)`,
-                  opacity:pgConf.opacity,zIndex:0,overflow:"hidden",
+                  opacity:pgConf.opacity,overflow:"hidden",
                 }}>
                   {img && <div style={{position:"absolute",inset:0,background:pgConf.overlay,pointerEvents:"none"}} />}
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.2,pointerEvents:"none"}} />
                 </div>
               );
             })}
+          </div>
+        )}
 
-            {/* Sticky content — does NOT scroll */}
-            <div style={{position:"sticky",top:0,height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"min(4vh,28px) min(3vw,24px)",zIndex:2}}>
+        {/* ── Fixed content layer (subpages only) — NEVER moves ── */}
+        {!isHome && pgConf && (
+          <div style={{position:"fixed",top:0,left:0,width:"100vw",height:"100vh",zIndex:2,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"min(4vh,28px) min(3vw,24px)",pointerEvents:"none"}}>
+            <div style={{pointerEvents:"auto",display:"flex",flexDirection:"column",alignItems:"center",width:"100%"}}>
               <div style={{textAlign:"center",marginBottom:"min(2.5vh,20px)"}}>
                 <div style={{fontSize:"min(12vw,140px)",fontWeight:"normal",fontFamily:"'Times New Roman',Times,serif",color:C.text,letterSpacing:"0.03em",lineHeight:0.85,textTransform:"uppercase"}}>{pgConf.title}</div>
                 <div style={{fontSize:"min(1.1vw,10px)",fontWeight:500,letterSpacing:"0.3em",color:C.textLight,marginTop:"min(1.5vh,12px)",fontFamily:"'IBM Plex Mono',monospace"}}>{pgConf.sub}</div>
@@ -551,7 +555,7 @@ export default function ProvaApp() {
           </div>
         )}
 
-        {/* ── Bottom Nav (buttons only, no bar) ── */}
+        {/* ── Bottom Nav ── */}
         <div style={{position:"fixed",bottom:16,left:24,right:24,display:"flex",alignItems:"center",justifyContent:"space-between",zIndex:30,pointerEvents:"none"}}>
           <div style={{display:"flex",pointerEvents:"auto"}}>
             {[{id:"quiz",l:"QUIZ"},{id:"test",l:"TEST"},{id:"review",l:"REVIEW"}].map((tab,i) => {
