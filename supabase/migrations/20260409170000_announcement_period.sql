@@ -1,0 +1,3 @@
+-- お知らせに告知期間を追加
+ALTER TABLE announcement ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ NOT NULL DEFAULT now();
+ALTER TABLE announcement ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ; -- NULLなら無期限
