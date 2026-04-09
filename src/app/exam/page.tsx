@@ -221,22 +221,6 @@ export default function ProvaApp() {
   const thS:React.CSSProperties = {padding:"min(1vh,8px) min(1.2vw,12px)",textAlign:"left",fontSize:"min(1vw,9px)",fontWeight:600,color:C.textLight,letterSpacing:"0.08em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`};
   const tdS:React.CSSProperties = {padding:"min(1.1vh,9px) min(1.2vw,12px)",fontSize:"min(1.2vw,12px)",borderBottom:`1px solid ${C.border}22`};
 
-  /* ── Nav buttons (shared between HOME and subpages) ── */
-  const navButtons = (
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:0}}>
-      {[{id:"quiz",l:"QUIZ"},{id:"test",l:"TEST"},{id:"review",l:"REVIEW"}].map((tab,i) => {
-        const active = page===tab.id;
-        const hov = hoveredTab===tab.id;
-        return <button key={tab.id} onClick={()=>setPage(tab.id)} onMouseEnter={()=>setHoveredTab(tab.id)} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 24px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,borderRight:i<2?"none":`1.5px solid ${C.text}`,background:active?C.text:hov?`${C.text}08`:C.bg,color:active?C.bg:C.text,transition:"all 0.15s"}}>{tab.l}</button>;
-      })}
-      {!isHome && <button onClick={()=>setPage("home")} onMouseEnter={()=>setHoveredTab("_home")} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 16px",fontSize:10,fontWeight:600,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,borderLeft:"none",background:hoveredTab==="_home"?`${C.text}08`:C.bg,color:C.text,transition:"all 0.15s"}}>← HOME</button>}
-      <button onClick={()=>setPage("mypage")} onMouseEnter={()=>setHoveredTab("mypage")} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,borderLeft:"none",background:page==="mypage"?C.text:hoveredTab==="mypage"?`${C.text}08`:C.bg,color:page==="mypage"?C.bg:C.text,transition:"all 0.15s",position:"relative"}}>
-        MY PAGE
-        {page!=="mypage"&&announcements.length>0 && <div style={{position:"absolute",top:-7,right:-7,width:18,height:18,borderRadius:"50%",background:C.red,color:"#fff",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",animation:"badgePulse 2s ease infinite"}}>{announcements.length}</div>}
-      </button>
-    </div>
-  );
-
   return (
     <>
       <style>{`
@@ -275,67 +259,55 @@ export default function ProvaApp() {
               <div style={{fontSize:"min(20vw,280px)",fontWeight:"normal",fontFamily:"'Times New Roman',Times,serif",color:C.text,letterSpacing:"0.04em",lineHeight:0.85,textTransform:"uppercase"}}>Prova</div>
               <div style={{fontSize:10,fontWeight:500,letterSpacing:"0.4em",color:C.textLight,marginTop:16,fontFamily:"'IBM Plex Mono',monospace"}}>TOM.STOCKS CARD QUIZ</div>
             </div>
-            {/* Cards */}
+            {/* Cards with diagonal reveal */}
             {homeCards.map((card,i) => {
               if (card.imgIdx < 0 || !cardImages[card.imgIdx]) return null;
               const maxS = typeof window!=="undefined"?window.innerHeight*1.5:1200;
               const scrollPct = maxS>0?(maxScrollY/maxS)*100:0;
               const raw = (scrollPct-card.at)/20;
               const reveal = Math.min(1,Math.max(0,raw));
-              const d = reveal*250;
-              const clip = reveal>=1?"none":reveal<=0?"polygon(0 0,0 0,0 0)":`polygon(-5% -5%,${d}% -5%,-5% ${d}%)`;
+              // Diagonal reveal: top-left to bottom-right
+              let clip: string;
+              if (reveal <= 0) clip = "polygon(0 0,0 0,0 0)";
+              else if (reveal >= 1) clip = "none";
+              else if (reveal < 0.5) {
+                const p = reveal * 2; // 0→1
+                clip = `polygon(0 0, ${p*100}% 0, 0 ${p*100}%)`;
+              } else {
+                const p = (reveal - 0.5) * 2; // 0→1
+                clip = `polygon(0 0, 100% 0, 100% ${p*100}%, ${p*100}% 100%, 0 100%)`;
+              }
               return (
                 <div key={i} style={{
                   position:"absolute",left:card.left,top:card.top,width:card.w,aspectRatio:"5/7",
                   background:`${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
-                  clipPath:clip,transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
+                  clipPath:clip,transition:"clip-path 0.8s cubic-bezier(0.4,0,0.2,1)",
+                  transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
                 }}>
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.25,pointerEvents:"none"}} />
                 </div>
               );
             })}
-            {/* Nav buttons fixed bottom */}
-            <div style={{position:"fixed",bottom:24,left:"50%",transform:"translateX(-50%)",zIndex:30}}>
-              {navButtons}
-            </div>
           </div>
           );
         })()}
 
         {/* ── Sub pages (QUIZ/TEST/REVIEW/MYPAGE) ── */}
-        {!isHome && pgConf && (() => {
-          // Infinite background cards using real images + color overlay
-          const subRows = 6;
-          const subHeight = subRows * 55 + 60;
-          const bgCards: {left:string;top:string;w:string;rot:number;spd:number;imgIdx:number}[] = [];
-          for (let row=0; row<subRows; row++) {
-            for (let ci=0; ci<BG_POS.length; ci++) {
-              const bp = BG_POS[ci];
-              const topVal = "top" in bp ? `calc(${bp.top} + ${row*55}vh)` : undefined;
-              const bottomVal = !topVal && "bottom" in bp ? `calc(${(bp as {bottom:string}).bottom} + ${(subRows-1-row)*55}vh)` : undefined;
-              bgCards.push({
-                left: "left" in bp ? (bp as {left:string}).left : "",
-                top: topVal || bottomVal || "0",
-                w: bp.w,
-                rot: bp.rot,
-                spd: bp.spd + (row%2)*0.05,
-                imgIdx: cardImages.length > 0 ? (row*6+ci) % cardImages.length : -1,
-              });
-            }
-          }
-          return (
-          <div style={{position:"relative",width:"100%",height:`${subHeight}vh`,overflow:"hidden"}}>
-            {/* Background cards with real images + theme overlay */}
-            {bgCards.map((c,i) => {
-              const img = c.imgIdx >= 0 ? cardImages[c.imgIdx] : null;
-              const posStyle: React.CSSProperties = {};
-              if (c.left) { posStyle.left = c.left; }
-              if ("right" in BG_POS[i % BG_POS.length]) { posStyle.right = (BG_POS[i % BG_POS.length] as {right:string}).right; }
+        {!isHome && pgConf && (
+          <div style={{position:"relative",width:"100%",height:"280vh",overflow:"hidden"}}>
+            {/* Background: 6 cards with real images + theme overlay */}
+            {BG_POS.map((bp,i) => {
+              const img = cardImages.length > 0 ? cardImages[i % cardImages.length] : null;
+              const pos: React.CSSProperties = {};
+              if ("top" in bp) pos.top = bp.top;
+              if ("bottom" in bp) pos.bottom = (bp as {bottom:string}).bottom;
+              if ("left" in bp) pos.left = (bp as {left:string}).left;
+              if ("right" in bp) pos.right = (bp as {right:string}).right;
               return (
                 <div key={`${page}-${i}`} style={{
-                  position:"absolute",top:c.top,...posStyle,width:c.w,aspectRatio:"5/7",
+                  position:"absolute",...pos,width:bp.w,aspectRatio:"5/7",
                   background: img ? `${C.bg} url(${img}) center/contain no-repeat` : pgConf.overlay,
-                  transform:`rotate(${c.rot}deg) translateY(${-scrollY*c.spd}px)`,
+                  transform:`rotate(${bp.rot}deg) translateY(${-scrollY*bp.spd}px)`,
                   opacity:pgConf.opacity,zIndex:0,overflow:"hidden",
                 }}>
                   {img && <div style={{position:"absolute",inset:0,background:pgConf.overlay,pointerEvents:"none"}} />}
@@ -345,7 +317,7 @@ export default function ProvaApp() {
             })}
 
             {/* Sticky content — does NOT scroll */}
-            <div style={{position:"sticky",top:0,height:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"min(4vh,28px) min(3vw,24px)",zIndex:2}}>
+            <div style={{position:"sticky",top:0,height:"calc(100vh - 50px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"min(4vh,28px) min(3vw,24px)",zIndex:2}}>
               <div style={{textAlign:"center",marginBottom:"min(2.5vh,20px)"}}>
                 <div style={{fontSize:"min(12vw,140px)",fontWeight:"normal",fontFamily:"'Times New Roman',Times,serif",color:C.text,letterSpacing:"0.03em",lineHeight:0.85,textTransform:"uppercase"}}>{pgConf.title}</div>
                 <div style={{fontSize:"min(1.1vw,10px)",fontWeight:500,letterSpacing:"0.3em",color:C.textLight,marginTop:"min(1.5vh,12px)",fontFamily:"'IBM Plex Mono',monospace"}}>{pgConf.sub}</div>
@@ -565,14 +537,28 @@ export default function ProvaApp() {
                 </div>
               )}
 
-              {/* Nav buttons at bottom of sticky area */}
-              <div style={{marginTop:"min(3vh,24px)"}}>
-                {navButtons}
-              </div>
             </div>
           </div>
-          );
-        })()}
+        )}
+
+        {/* ── Bottom Nav (fixed) ── */}
+        <div style={{position:"fixed",bottom:0,left:0,right:0,height:50,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 24px",zIndex:30,background:"rgba(245,243,238,0.92)",backdropFilter:"blur(10px)",borderTop:`1px solid ${C.border}`}}>
+          <div style={{display:"flex"}}>
+            {[{id:"quiz",l:"QUIZ"},{id:"test",l:"TEST"},{id:"review",l:"REVIEW"}].map((tab,i) => {
+              const active = page===tab.id;
+              const hov = hoveredTab===tab.id;
+              // On subpages: active tab becomes HOME button
+              const label = active ? "HOME" : tab.l;
+              const onClick = active ? ()=>setPage("home") : ()=>setPage(tab.id);
+              return <button key={tab.id} onClick={onClick} onMouseEnter={()=>setHoveredTab(tab.id)} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 24px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,borderRight:i<2?"none":`1.5px solid ${C.text}`,background:active?C.text:hov?`${C.text}08`:C.bg,color:active?C.bg:C.text,transition:"all 0.15s"}}>{label}</button>;
+            })}
+          </div>
+          {isHome && <button onClick={handleLogout} style={{background:"none",border:"none",color:C.textLight,fontSize:10,cursor:"pointer",letterSpacing:"0.1em",fontFamily:"'IBM Plex Mono',monospace"}} onMouseEnter={e=>e.currentTarget.style.color=C.red} onMouseLeave={e=>e.currentTarget.style.color=C.textLight}>LOGOUT</button>}
+          <button onClick={()=>setPage(page==="mypage"?"home":"mypage")} onMouseEnter={()=>setHoveredTab("mypage")} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"8px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,background:page==="mypage"?C.text:hoveredTab==="mypage"?`${C.text}08`:C.bg,color:page==="mypage"?C.bg:C.text,transition:"all 0.15s",position:"relative"}}>
+            {page==="mypage"?"HOME":"MY PAGE"}
+            {page!=="mypage"&&announcements.length>0 && <div style={{position:"absolute",top:-7,right:-7,width:18,height:18,borderRadius:"50%",background:C.red,color:"#fff",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",animation:"badgePulse 2s ease infinite"}}>{announcements.length}</div>}
+          </button>
+        </div>
       </div>
     </>
   );
