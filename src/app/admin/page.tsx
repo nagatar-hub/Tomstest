@@ -82,13 +82,13 @@ export default function AdminPage() {
           <div className="flex gap-2">
             <button
               onClick={() => router.push("/admin/settings")}
-              className="px-4 py-2 bg-gray-200 rounded-lg text-sm hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300"
             >
               許容範囲設定
             </button>
             <button
               onClick={() => router.push("/admin/users")}
-              className="px-4 py-2 bg-gray-200 rounded-lg text-sm hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300"
             >
               ユーザー管理
             </button>
