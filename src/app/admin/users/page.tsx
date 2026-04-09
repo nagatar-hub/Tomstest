@@ -11,6 +11,14 @@ export default function UsersPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  function copyRegisterLink() {
+    const url = `${window.location.origin}/register`;
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
@@ -52,6 +60,22 @@ export default function UsersPage() {
           >
             戻る
           </button>
+        </div>
+
+        <div className="bg-white rounded-xl border p-4 mb-6">
+          <p className="text-sm font-medium text-gray-700 mb-2">スタッフ登録リンク</p>
+          <div className="flex gap-2 items-center">
+            <code className="flex-1 px-3 py-2 bg-gray-100 rounded text-sm text-gray-800 truncate">
+              {typeof window !== "undefined" ? `${window.location.origin}/register` : "/register"}
+            </code>
+            <button
+              onClick={copyRegisterLink}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 whitespace-nowrap"
+            >
+              {copied ? "コピー済み" : "コピー"}
+            </button>
+          </div>
+          <p className="text-xs text-gray-400 mt-2">このリンクをスタッフに共有してください。自分で名前とパスワードを登録できます。</p>
         </div>
 
         <form onSubmit={handleRegister} className="bg-white rounded-xl border p-6 space-y-4">
