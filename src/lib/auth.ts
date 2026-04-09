@@ -13,11 +13,12 @@ export interface OAuthCredentials {
 }
 
 function getCredentials(): OAuthCredentials {
-  const refreshToken = process.env.KECAK_GOOGLE_REFRESH_TOKEN;
+  // KECAK用トークンを優先、なければメインアカウントにフォールバック
+  const refreshToken = process.env.KECAK_GOOGLE_REFRESH_TOKEN || process.env.GOOGLE_REFRESH_TOKEN;
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
-  if (!refreshToken?.trim()) throw new Error('KECAK_GOOGLE_REFRESH_TOKEN が未設定です');
+  if (!refreshToken?.trim()) throw new Error('KECAK_GOOGLE_REFRESH_TOKEN または GOOGLE_REFRESH_TOKEN が未設定です');
   if (!clientId?.trim()) throw new Error('GOOGLE_CLIENT_ID が未設定です');
   if (!clientSecret?.trim()) throw new Error('GOOGLE_CLIENT_SECRET が未設定です');
 

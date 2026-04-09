@@ -39,13 +39,20 @@ export async function POST(request: Request) {
       });
 
       const parsed = parseKecakRows(rows, franchise as Franchise);
-      console.log(`[sync] ${franchise}: ${parsed.length} 件パース完了`);
 
-      if (parsed.length === 0) continue;
+      // バッチ内の重複排除（同じ franchise+card_name+grade が複数ある場合、後勝ち）
+      const deduped = [
+        ...new Map(
+          parsed.map((c) => [`${c.franchise}|${c.card_name}|${c.grade ?? ''}`, c]),
+        ).values(),
+      ];
+      console.log(`[sync] ${franchise}: ${parsed.length} 件パース → ${deduped.length} 件（重複排除後）`);
+
+      if (deduped.length === 0) continue;
 
       // 1000件ずつ upsert
-      for (let i = 0; i < parsed.length; i += 1000) {
-        const batch = parsed.slice(i, i + 1000).map((card) => ({
+      for (let i = 0; i < deduped.length; i += 1000) {
+        const batch = deduped.slice(i, i + 1000).map((card) => ({
           franchise: card.franchise,
           card_name: card.card_name,
           grade: card.grade,
