@@ -81,6 +81,12 @@ export default function AdminPage() {
           <h1 className="text-2xl font-bold">管理画面</h1>
           <div className="flex gap-2">
             <button
+              onClick={() => router.push("/admin/trial")}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+            >
+              模擬テスト
+            </button>
+            <button
               onClick={() => router.push("/admin/settings")}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300"
             >
