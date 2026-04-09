@@ -99,13 +99,14 @@ export default function ExamStartPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center font-mono text-[11px] font-bold"
-              style={{ background: "linear-gradient(135deg, #292524, #44403c)", color: "#f59e0b", boxShadow: "0 2px 6px rgba(0,0,0,0.12)" }}>
-              TS
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[14px] font-bold"
+              style={{ background: "linear-gradient(135deg, #292524, #44403c)", color: "#f59e0b", fontFamily: "'DM Serif Display', serif", boxShadow: "0 2px 6px rgba(0,0,0,0.12)" }}>
+              P
             </div>
             <div>
-              <div className="text-[15px] font-bold" style={{ color: "#292524" }}>テスト開始</div>
-              <div className="text-[10px] font-semibold uppercase" style={{ color: "#b45309", letterSpacing: "0.1em" }}>TOM.Stocks Quiz</div>
+              <div style={{ color: "#292524", fontFamily: "'DM Serif Display', serif", fontSize: 18, letterSpacing: "0.04em", lineHeight: 1.1 }}>
+                PROVA
+              </div>
             </div>
           </div>
           <button onClick={() => router.push("/exam/history")}

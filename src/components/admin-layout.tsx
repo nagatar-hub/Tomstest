@@ -47,22 +47,22 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         {/* Brand */}
         <div className="px-[18px] py-5 flex items-center gap-3" style={{ borderBottom: "1px solid var(--color-border-light)" }}>
           <div
-            className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center font-mono text-[13px] font-bold"
+            className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center text-[15px] font-bold"
             style={{
               background: "linear-gradient(135deg, #292524 0%, #44403c 100%)",
               color: "#f59e0b",
-              letterSpacing: "-0.05em",
+              fontFamily: "'DM Serif Display', serif",
               boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
             }}
           >
-            TS
+            P
           </div>
           <div>
-            <div className="text-[15px] font-bold" style={{ color: "#292524", letterSpacing: "-0.02em" }}>
-              TOM.Stocks
+            <div style={{ color: "#292524", fontFamily: "'DM Serif Display', serif", fontSize: 20, letterSpacing: "0.04em", lineHeight: 1.1 }}>
+              PROVA
             </div>
             <div className="text-[10px] font-semibold uppercase" style={{ color: "#b45309", letterSpacing: "0.12em" }}>
-              Quiz Admin
+              Admin
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               {NAV_ITEMS.find((n) => pathname === n.href || (n.href !== "/admin" && pathname.startsWith(n.href)))?.label ?? ""}
             </h1>
             <p className="text-[12.5px] mt-0.5" style={{ color: "#a8a29e" }}>
-              TOM.Stocks Quiz 管理システム
+              PROVA 管理システム
             </p>
           </div>
           <div

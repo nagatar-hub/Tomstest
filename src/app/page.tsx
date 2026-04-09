@@ -37,17 +37,17 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div
-            className="w-10 h-10 rounded-[10px] flex items-center justify-center font-mono text-sm font-bold"
+            className="w-10 h-10 rounded-[10px] flex items-center justify-center text-[17px] font-bold"
             style={{
               background: "linear-gradient(135deg, #292524 0%, #44403c 100%)",
               color: "#f59e0b",
+              fontFamily: "'DM Serif Display', serif",
               boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
             }}
-          >TS</div>
+          >P</div>
           <div>
-            <div className="text-lg font-bold" style={{ color: "#292524" }}>TOM.Stocks</div>
-            <div className="text-[10px] font-semibold uppercase" style={{ color: "#b45309", letterSpacing: "0.12em" }}>
-              Quiz System
+            <div style={{ color: "#292524", fontFamily: "'DM Serif Display', serif", fontSize: 24, letterSpacing: "0.04em", lineHeight: 1.1 }}>
+              PROVA
             </div>
           </div>
         </div>
