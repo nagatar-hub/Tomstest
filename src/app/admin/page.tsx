@@ -93,6 +93,24 @@ export default function AdminPage() {
               共通テスト
             </button>
             <button
+              onClick={() => router.push("/admin/question-bank")}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700"
+            >
+              問題DB
+            </button>
+            <button
+              onClick={() => router.push("/admin/custom-cards")}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300"
+            >
+              個別登録
+            </button>
+            <button
+              onClick={() => router.push("/admin/announcements")}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300"
+            >
+              お知らせ
+            </button>
+            <button
               onClick={() => router.push("/admin/settings")}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg text-sm hover:bg-gray-300"
             >

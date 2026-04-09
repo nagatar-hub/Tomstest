@@ -26,11 +26,17 @@ export default function ExamStartPage() {
   const [commonTests, setCommonTests] = useState<CommonTestItem[]>([]);
   const [loadingTests, setLoadingTests] = useState(true);
 
+  // お知らせ
+  const [announcements, setAnnouncements] = useState<{ id: string; title: string; body: string | null; is_pinned: boolean; created_at: string }[]>([]);
+
   useEffect(() => {
     fetch("/api/exam/common-tests")
       .then((r) => r.json())
       .then((data) => setCommonTests(Array.isArray(data) ? data : []))
       .finally(() => setLoadingTests(false));
+    fetch("/api/announcements")
+      .then((r) => r.json())
+      .then((data) => setAnnouncements(Array.isArray(data) ? data.slice(0, 5) : []));
   }, []);
 
   async function handleRandomStart() {
@@ -87,6 +93,20 @@ export default function ExamStartPage() {
           <button onClick={() => router.push("/exam/history")}
             className="text-sm text-blue-600 hover:underline">成績履歴</button>
         </div>
+
+        {/* お知らせ */}
+        {announcements.length > 0 && (
+          <div className="mb-6 space-y-2">
+            {announcements.map((a) => (
+              <div key={a.id} className={`px-3 py-2 rounded-lg text-sm ${
+                a.is_pinned ? "bg-yellow-50 border border-yellow-200" : "bg-blue-50 border border-blue-200"
+              }`}>
+                <p className="font-medium text-gray-900">{a.is_pinned ? "📌 " : ""}{a.title}</p>
+                {a.body && <p className="text-gray-600 text-xs mt-0.5">{a.body}</p>}
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* タブ */}
         <div className="flex gap-1 bg-gray-200 rounded-lg p-1 mb-6">
