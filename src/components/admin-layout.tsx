@@ -38,10 +38,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-full">
-      {/* サイドバー */}
+    <div className="flex min-h-screen">
+      {/* サイドバー（固定） */}
       <aside
-        className="w-[244px] glass-strong flex flex-col shrink-0"
+        className="w-[244px] glass-strong flex flex-col shrink-0 fixed top-0 left-0 h-screen z-20 overflow-y-auto"
         style={{ borderRight: "1px solid var(--color-border-light)" }}
       >
         {/* Brand */}
@@ -136,8 +136,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-auto">
+      {/* Main（サイドバー幅分オフセット） */}
+      <main className="flex-1 overflow-auto ml-[244px]">
         {/* Header */}
         <header
           className="sticky top-0 z-10 px-7 py-[18px] flex justify-between items-center"
