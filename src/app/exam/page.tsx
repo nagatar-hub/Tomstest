@@ -220,10 +220,25 @@ export default function ExamStartPage() {
             }}>P</div>
             <span style={{ fontSize: 17, fontWeight: 700, fontFamily: "'DM Serif Display', serif", letterSpacing: "0.04em" }}>PROVA</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <button onClick={() => router.push("/exam/history")} style={{
               padding: "6px 12px", borderRadius: 8, background: C.accentLight, border: "1px solid #fde68a", color: C.accent, fontSize: 12.5, fontWeight: 600, cursor: "pointer", transition: "all 0.15s",
             }}>成績履歴 →</button>
+            <div style={{ width: 1, height: 24, background: C.border }} />
+            <button onClick={() => router.push("/exam/mypage")}
+              className="flex items-center justify-center transition-all duration-150 hover:scale-110"
+              title="MY PAGE"
+              style={{
+                width: 34, height: 34, borderRadius: 10,
+                background: `linear-gradient(135deg, ${C.accent}, #f59e0b)`,
+                color: "#fff", fontSize: 14, fontWeight: 700,
+                fontFamily: "'DM Serif Display', serif",
+                boxShadow: `0 2px 8px ${C.accent}30`,
+                border: "none", cursor: "pointer",
+              }}
+            >
+              {typeof window !== "undefined" ? (JSON.parse(sessionStorage.getItem("user") ?? '{"name":"?"}').name?.[0]?.toUpperCase() ?? "?") : "?"}
+            </button>
             <button onClick={() => { sessionStorage.clear(); router.push("/"); }} style={{
               background: "none", border: "none", color: C.textLight, fontSize: 12, cursor: "pointer",
             }}>ログアウト</button>
