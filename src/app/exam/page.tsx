@@ -59,7 +59,7 @@ export default function ProvaApp() {
   const [scrollY, setScrollY] = useState(0);
   const [maxScrollY, setMaxScrollY] = useState(0);
   const [hoveredTab, setHoveredTab] = useState<string|null>(null);
-  const [homeRows, setHomeRows] = useState(5);
+  const [homeRows, setHomeRows] = useState(1); // 1 batch = 3 rows of 12 cards
   const [subBgSeed, setSubBgSeed] = useState(0); // changes on page switch to shuffle BG
   const [avatarHover, setAvatarHover] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,7 +139,7 @@ export default function ProvaApp() {
   useEffect(() => {
     if (containerRef.current) containerRef.current.scrollTop = 0;
     setScrollY(0);
-    if (page === "home") { setMaxScrollY(0); setHomeRows(5); }
+    if (page === "home") { setMaxScrollY(0); setHomeRows(1); }
     else { setSubBgSeed(prev => prev + 1); }
   }, [page]);
 
@@ -235,41 +235,60 @@ export default function ProvaApp() {
 
         {/* ── HOME ── */}
         {isHome && (() => {
-          // 4 columns, original card size (~20vw), same speed per row
-          const cardW = 20; // vw — original size
-          const cardH = cardW * 1.4; // 28vw
-          const cols = 4;
-          const margin = 2; // vw
-          const gap = (100 - margin*2 - cols*cardW) / (cols-1); // ~4vw
-          const rowH = cardH + 5; // 33vw per row (5vw gap)
-          const rowSpeeds = [0.15, 0.25, 0.15, 0.25, 0.15, 0.25, 0.15, 0.25];
+          /* Base 12 cards (3 rows) — exact positions from spec */
+          const BASE_CARDS = [
+            // Row 1 — speed 0.3
+            { left:"1%",top:"2vh",w:"26%",rot:-3,spd:0.3,at:-20 },
+            { left:"28%",top:"6vh",w:"19%",rot:2,spd:0.3,at:-20 },
+            { left:"49%",top:"3vh",w:"24%",rot:-1,spd:0.3,at:-20 },
+            { left:"75%",top:"5vh",w:"22%",rot:4,spd:0.3,at:-20 },
+            // Row 2 — speed 0.5
+            { left:"2%",top:"56vh",w:"21%",rot:2,spd:0.5,at:-20 },
+            { left:"25%",top:"53vh",w:"27%",rot:-3,spd:0.5,at:-20 },
+            { left:"54%",top:"58vh",w:"20%",rot:1,spd:0.5,at:-20 },
+            { left:"76%",top:"55vh",w:"24%",rot:-2,spd:0.5,at:-20 },
+            // Row 3 — speed 0.4 (scroll to reveal)
+            { left:"0%",top:"116vh",w:"23%",rot:-2,spd:0.4,at:15 },
+            { left:"24%",top:"112vh",w:"28%",rot:3,spd:0.4,at:18 },
+            { left:"55%",top:"118vh",w:"18%",rot:-4,spd:0.4,at:14 },
+            { left:"74%",top:"114vh",w:"25%",rot:2,spd:0.4,at:20 },
+          ];
+          const ROW_SPEEDS = [0.3, 0.5, 0.4];
+          const BATCH_HEIGHT = 170; // vh per batch of 3 rows
 
-          const homeCards: {left:number;top:number;w:number;spd:number;at:number;imgIdx:number}[] = [];
-          for (let row = 0; row < homeRows; row++) {
-            for (let col = 0; col < cols; col++) {
-              homeCards.push({
-                left: margin + col * (cardW + gap),
-                top: row * rowH,
-                w: cardW,
-                spd: rowSpeeds[row % rowSpeeds.length],
-                at: row <= 1 ? -20 : (row - 1) * 15,
-                imgIdx: cardImages.length > 0 ? (row * cols + col) % cardImages.length : -1,
+          // Generate cards: base batch + repeated batches for infinite scroll
+          const allCards: {left:string;top:string;w:string;rot:number;spd:number;at:number;imgIdx:number}[] = [];
+          for (let batch = 0; batch < homeRows; batch++) {
+            const vhOffset = batch * BATCH_HEIGHT;
+            for (let ci = 0; ci < BASE_CARDS.length; ci++) {
+              const bc = BASE_CARDS[ci];
+              const rowInBatch = ci < 4 ? 0 : ci < 8 ? 1 : 2;
+              const origVh = parseFloat(bc.top);
+              allCards.push({
+                left: bc.left,
+                top: `${origVh + vhOffset}vh`,
+                w: bc.w,
+                rot: bc.rot,
+                spd: ROW_SPEEDS[rowInBatch],
+                at: batch === 0 ? bc.at : 15 + batch * 20 + rowInBatch * 5,
+                imgIdx: cardImages.length > 0 ? (batch * 12 + ci) % cardImages.length : -1,
               });
             }
           }
-          const homeHeight = homeRows * rowH + 40;
+          const homeHeight = homeRows * BATCH_HEIGHT + 50;
           const maxS = containerRef.current
             ? containerRef.current.scrollHeight - containerRef.current.clientHeight
             : 1200;
 
           return (
-          <div style={{position:"relative",width:"100%",height:`${homeHeight}vw`}}>
+          <div style={{position:"relative",width:"100%",height:`${homeHeight}vh`}}>
             <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",zIndex:1,pointerEvents:"none",textAlign:"center"}}>
               <div style={{fontSize:"min(20vw,280px)",fontWeight:"normal",fontFamily:"'Times New Roman',Times,serif",color:C.text,letterSpacing:"0.04em",lineHeight:0.85,textTransform:"uppercase"}}>Prova</div>
               <div style={{fontSize:10,fontWeight:500,letterSpacing:"0.4em",color:C.textLight,marginTop:16,fontFamily:"'IBM Plex Mono',monospace"}}>TOM.STOCKS CARD QUIZ</div>
             </div>
-            {homeCards.map((card, i) => {
+            {allCards.map((card, i) => {
               if (card.imgIdx < 0 || !cardImages[card.imgIdx]) return null;
+              // Reveal: maxScrollY based — once revealed, stays revealed
               const scrollPct = maxS > 0 ? (maxScrollY / maxS) * 100 : 0;
               const raw = (scrollPct - card.at) / 20;
               const reveal = Math.min(1, Math.max(0, raw));
@@ -283,14 +302,17 @@ export default function ProvaApp() {
                 const p = (reveal - 0.5) * 2;
                 clip = `polygon(0 0, 100% 0, 100% ${p*100}%, ${p*100}% 100%, 0 100%)`;
               }
+              const img = cardImages[card.imgIdx];
               return (
                 <div key={i} style={{
-                  position:"absolute",left:`${card.left}vw`,top:`${card.top}vw`,width:`${card.w}vw`,aspectRatio:"5/7",
-                  background:`${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
-                  clipPath:clip,transition:"clip-path 0.5s ease-out",
-                  transform:`translateY(${scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",
-                  boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
+                  position:"absolute",left:card.left,top:card.top,width:card.w,
+                  aspectRatio:"63/88",
+                  transform:`rotate(${card.rot}deg) translateY(${-scrollY*card.spd}px)`,
+                  clipPath:clip,transition:"clip-path 0.8s cubic-bezier(0.4,0,0.2,1)",
+                  zIndex:2,overflow:"hidden",boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
+                  background:C.bg,
                 }}>
+                  <img src={img} alt="" style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}} />
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.25,pointerEvents:"none"}} />
                 </div>
               );
