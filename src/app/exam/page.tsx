@@ -22,12 +22,12 @@ const PG_CONF: Record<string,{title:string;sub:string;opacity:number;overlay:str
 
 /* ── BG card positions for subpages (6 cards, position:fixed, spread) ── */
 const BG_POS = [
-  {top:"2vh",left:"1vw",w:"15vw",rot:-4,spd:0.12},
-  {top:"-3vh",left:"36vw",w:"16vw",rot:3,spd:0.20},
-  {top:"5vh",left:"72vw",w:"14vw",rot:-2,spd:0.08},
-  {top:"52vh",left:"3vw",w:"15vw",rot:2,spd:0.22},
-  {top:"48vh",left:"40vw",w:"13vw",rot:-3,spd:0.10},
-  {top:"55vh",left:"74vw",w:"15vw",rot:4,spd:0.18},
+  {top:"2vh",left:"1vw",w:"18vw",rot:-4,spd:0.15},
+  {top:"-5vh",left:"36vw",w:"20vw",rot:3,spd:0.28},
+  {top:"5vh",left:"74vw",w:"17vw",rot:-2,spd:0.10},
+  {top:"50vh",left:"2vw",w:"19vw",rot:2,spd:0.30},
+  {top:"45vh",left:"40vw",w:"16vw",rot:-3,spd:0.12},
+  {top:"52vh",left:"75vw",w:"18vw",rot:4,spd:0.22},
 ];
 
 /* ── Shared UI ── */
@@ -59,7 +59,7 @@ export default function ProvaApp() {
   const [scrollY, setScrollY] = useState(0);
   const [maxScrollY, setMaxScrollY] = useState(0);
   const [hoveredTab, setHoveredTab] = useState<string|null>(null);
-  const [homeRows, setHomeRows] = useState(3);
+  const [homeRows, setHomeRows] = useState(5);
   const [subBgSeed, setSubBgSeed] = useState(0); // changes on page switch to shuffle BG
   const [avatarHover, setAvatarHover] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,7 +139,7 @@ export default function ProvaApp() {
   useEffect(() => {
     if (containerRef.current) containerRef.current.scrollTop = 0;
     setScrollY(0);
-    if (page === "home") { setMaxScrollY(0); setHomeRows(3); }
+    if (page === "home") { setMaxScrollY(0); setHomeRows(5); }
     else { setSubBgSeed(prev => prev + 1); }
   }, [page]);
 
@@ -235,15 +235,14 @@ export default function ProvaApp() {
 
         {/* ── HOME ── */}
         {isHome && (() => {
-          // 4 columns, cards don't overlap — uniform parallax speed per row
-          const cardW = 14; // vw
-          const cardH = cardW * 1.4; // 19.6vw
+          // 4 columns, original card size (~20vw), same speed per row
+          const cardW = 20; // vw — original size
+          const cardH = cardW * 1.4; // 28vw
           const cols = 4;
-          const margin = 2; // vw margin on sides
-          const gap = (100 - margin*2 - cols*cardW) / (cols-1); // ~5.3vw
-          const rowH = cardH + 4; // vw — 4vw gap between rows
-          // ALL cards in same row share same speed → no relative vertical displacement within row
-          const rowSpeeds = [0.10, 0.13, 0.10, 0.13, 0.10, 0.13, 0.10, 0.13, 0.10, 0.13];
+          const margin = 2; // vw
+          const gap = (100 - margin*2 - cols*cardW) / (cols-1); // ~4vw
+          const rowH = cardH + 5; // 33vw per row (5vw gap)
+          const rowSpeeds = [0.15, 0.25, 0.15, 0.25, 0.15, 0.25, 0.15, 0.25];
 
           const homeCards: {left:number;top:number;w:number;spd:number;at:number;imgIdx:number}[] = [];
           for (let row = 0; row < homeRows; row++) {
@@ -258,11 +257,10 @@ export default function ProvaApp() {
               });
             }
           }
-          const homeHeight = homeRows * rowH + 30;
-          // Dynamic maxS based on actual scroll height
+          const homeHeight = homeRows * rowH + 40;
           const maxS = containerRef.current
             ? containerRef.current.scrollHeight - containerRef.current.clientHeight
-            : (typeof window !== "undefined" ? window.innerHeight * 1.5 : 1200);
+            : 1200;
 
           return (
           <div style={{position:"relative",width:"100%",height:`${homeHeight}vw`}}>
@@ -272,7 +270,6 @@ export default function ProvaApp() {
             </div>
             {homeCards.map((card, i) => {
               if (card.imgIdx < 0 || !cardImages[card.imgIdx]) return null;
-              // Reveal: maxScrollY → percentage of total scroll → compare to card.at
               const scrollPct = maxS > 0 ? (maxScrollY / maxS) * 100 : 0;
               const raw = (scrollPct - card.at) / 20;
               const reveal = Math.min(1, Math.max(0, raw));
@@ -291,7 +288,7 @@ export default function ProvaApp() {
                   position:"absolute",left:`${card.left}vw`,top:`${card.top}vw`,width:`${card.w}vw`,aspectRatio:"5/7",
                   background:`${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
                   clipPath:clip,transition:"clip-path 0.5s ease-out",
-                  transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",
+                  transform:`translateY(${scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",
                   boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
                 }}>
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.25,pointerEvents:"none"}} />
