@@ -35,6 +35,8 @@ export default function ExamStartPage() {
   const [commonTests, setCommonTests] = useState<CommonTestItem[]>([]);
   const [loadingTests, setLoadingTests] = useState(true);
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [normalAnswered, setNormalAnswered] = useState(0);
+  const hardUnlocked = normalAnswered >= 20;
 
   useEffect(() => {
     fetch("/api/exam/common-tests")
@@ -44,6 +46,23 @@ export default function ExamStartPage() {
     fetch("/api/announcements")
       .then((r) => r.json())
       .then((data) => setAnnouncements(Array.isArray(data) ? data.slice(0, 5) : []));
+
+    // ノーマル難易度の回答数を取得（むずかしい解放判定用）
+    const userStr = sessionStorage.getItem("user");
+    if (userStr) {
+      const user = JSON.parse(userStr);
+      fetch(`/api/exam/history?user_id=${user.id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          const normalSessions = (data.sessions ?? []).filter(
+            (s: { difficulty: string }) => s.difficulty === "normal"
+          );
+          const total = normalSessions.reduce(
+            (sum: number, s: { total_questions: number }) => sum + s.total_questions, 0
+          );
+          setNormalAnswered(total);
+        });
+    }
   }, []);
 
   async function handleRandomStart() {
@@ -199,18 +218,32 @@ export default function ExamStartPage() {
             <div>
               <label className="block text-[11px] font-semibold uppercase mb-2" style={{ color: "#a8a29e", letterSpacing: "0.06em" }}>難易度</label>
               <div className="grid grid-cols-3 gap-2">
-                {DIFFICULTIES.map((d) => (
-                  <button key={d} onClick={() => setDifficulty(d)}
-                    className={`py-2.5 px-2 rounded-[9px] border-[1.5px] text-[13px] transition-all duration-150 ${difficulty === d ? activeBtn : inactiveBtn}`}>
-                    {DIFFICULTY_JA[d]}
-                  </button>
-                ))}
+                {DIFFICULTIES.map((d) => {
+                  const locked = d === "hard" && !hardUnlocked;
+                  return (
+                    <button key={d}
+                      onClick={() => { if (!locked) setDifficulty(d); }}
+                      disabled={locked}
+                      className={`py-2.5 px-2 rounded-[9px] border-[1.5px] text-[13px] transition-all duration-150 relative ${
+                        locked
+                          ? "border-[#e8e3d9] bg-[#f3f0ea] text-[#a8a29e] cursor-not-allowed opacity-60"
+                          : difficulty === d ? activeBtn : inactiveBtn
+                      }`}>
+                      {locked ? "🔒 " : ""}{DIFFICULTY_JA[d]}
+                    </button>
+                  );
+                })}
               </div>
               <p className="mt-2 text-[11px]" style={{ color: "#a8a29e" }}>
                 {difficulty === "easy" && "4択から選ぶモードです"}
                 {difficulty === "normal" && "価格を直接入力します（許容範囲あり）"}
                 {difficulty === "hard" && "価格を直接入力します（許容範囲が狭い）"}
               </p>
+              {!hardUnlocked && (
+                <p className="mt-1 text-[10.5px] font-mono" style={{ color: "#b45309" }}>
+                  むずかしいを解放するには: ノーマルをあと{Math.max(0, 20 - normalAnswered)}問解こう
+                </p>
+              )}
             </div>
 
             <button onClick={handleRandomStart} disabled={loading}
