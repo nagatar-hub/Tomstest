@@ -106,6 +106,7 @@ export default function ProvaApp() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [cardStats, setCardStats] = useState<CardStat[]>([]);
   const [hardUnlocked, setHardUnlocked] = useState(false);
+  const [cardImages, setCardImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -125,6 +126,10 @@ export default function ProvaApp() {
     if (!user) return;
     fetch("/api/exam/common-tests").then(r=>r.json()).then(d=>setCommonTests(Array.isArray(d)?d:[]));
     fetch("/api/announcements").then(r=>r.json()).then(d=>setAnnouncements(Array.isArray(d)?d.slice(0,5):[]));
+    // HOME用カード画像を取得（ランダム12枚）
+    fetch("/api/admin/cards?limit=12").then(r=>r.json()).then((cards:{image_url:string|null}[])=>{
+      setCardImages(cards.filter((c:{image_url:string|null})=>c.image_url).map((c:{image_url:string|null})=>c.image_url!));
+    });
     fetch(`/api/exam/history?user_id=${user.id}`).then(r=>r.json()).then(data=>{
       setSessions(data.sessions??[]);
       setCardStats(data.card_stats??[]);
@@ -249,8 +254,14 @@ export default function ProvaApp() {
               const d = reveal*250;
               const clip = reveal>=1?"none":reveal<=0?"polygon(0 0,0 0,0 0)":`polygon(-5% -5%,${d}% -5%,-5% ${d}%)`;
               return (
-                <div key={i} style={{position:"absolute",left:card.left,top:card.top,width:card.w,height:card.h,background:card.grad,clipPath:clip,transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",boxShadow:"0 2px 10px rgba(0,0,0,0.06)"}}>
-                  <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.3}} />
+                <div key={i} style={{
+                  position:"absolute",left:card.left,top:card.top,width:card.w,height:card.h,
+                  background: cardImages[i]
+                    ? `url(${cardImages[i]}) center/cover no-repeat`
+                    : card.grad,
+                  clipPath:clip,transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
+                }}>
+                  <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.25,pointerEvents:"none"}} />
                 </div>
               );
             })}
