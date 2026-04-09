@@ -233,58 +233,66 @@ export default function ProvaApp() {
 
         {/* ── HOME ── */}
         {isHome && (() => {
-          // 3列 × homeRows行、余裕を持たせて重ならない
-          const colPositions = [3, 36, 70]; // left %
-          const colWidths = [16, 17, 15]; // vw — small enough to never overlap
-          const colSpeeds = [0.15, 0.25, 0.2];
-          const homeCards: {left:string;top:string;w:string;spd:number;revealPx:number;imgIdx:number}[] = [];
-          for (let row=0; row<homeRows; row++) {
-            const baseTop = row * 45; // 45vh per row
-            for (let col=0; col<3; col++) {
-              const jitterTop = ((row*3+col)*7) % 5; // small deterministic offset
+          // Grid approach: each card occupies its own cell, guaranteed no overlap
+          // 3 columns, each card ~15vw wide (aspect 5:7 → ~21vw tall)
+          // Stagger: odd rows offset by half a cell
+          const cardW = 15; // vw
+          const cardH = cardW * 1.4; // vw (5:7 ratio)
+          const gapX = 6; // vw horizontal gap
+          const gapY = 4; // vw vertical gap
+          const cols = 3;
+          const totalW = cols * cardW + (cols-1) * gapX; // total grid width in vw
+          const startX = (100 - totalW) / 2; // center the grid
+          const speeds = [0.15, 0.25, 0.18];
+
+          const homeCards: {left:string;top:string;w:string;spd:number;at:number;imgIdx:number}[] = [];
+          for (let row = 0; row < homeRows; row++) {
+            const rowOffset = (row % 2) * ((cardW + gapX) / 2); // stagger odd rows
+            for (let col = 0; col < cols; col++) {
+              const x = startX + rowOffset + col * (cardW + gapX);
+              if (x + cardW > 100) continue; // skip if overflows
+              const y = row * (cardH + gapY);
               homeCards.push({
-                left:`${colPositions[col] + ((row*3+col)*3)%4}%`,
-                top:`${baseTop + jitterTop}vh`,
-                w:`${colWidths[col]}vw`,
-                spd: colSpeeds[col] + (row%3)*0.03,
-                revealPx: row <= 1 ? 0 : (row-1) * 300, // px scroll to start reveal
-                imgIdx: cardImages.length > 0 ? (row*3+col) % cardImages.length : -1,
+                left: `${x}vw`,
+                top: `${y}vw`,
+                w: `${cardW}vw`,
+                spd: speeds[col] + (row % 3) * 0.03,
+                at: row <= 1 ? -20 : (row - 1) * 12,
+                imgIdx: cardImages.length > 0 ? (row * cols + col) % cardImages.length : -1,
               });
             }
           }
-          const homeHeight = homeRows * 45 + 50;
+          const homeHeight = homeRows * (cardH + gapY) + 20; // vw → use vw for height too
           return (
-          <div style={{position:"relative",width:"100%",height:`${homeHeight}vh`}}>
-            {/* Title fixed center */}
+          <div style={{position:"relative",width:"100%",height:`${homeHeight}vw`}}>
             <div style={{position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",zIndex:1,pointerEvents:"none",textAlign:"center"}}>
               <div style={{fontSize:"min(20vw,280px)",fontWeight:"normal",fontFamily:"'Times New Roman',Times,serif",color:C.text,letterSpacing:"0.04em",lineHeight:0.85,textTransform:"uppercase"}}>Prova</div>
               <div style={{fontSize:10,fontWeight:500,letterSpacing:"0.4em",color:C.textLight,marginTop:16,fontFamily:"'IBM Plex Mono',monospace"}}>TOM.STOCKS CARD QUIZ</div>
             </div>
-            {/* Cards with diagonal reveal */}
-            {homeCards.map((card,i) => {
+            {homeCards.map((card, i) => {
               if (card.imgIdx < 0 || !cardImages[card.imgIdx]) return null;
-              // Reveal based on scrollY (real-time, not maxScrollY)
-              const effectiveScroll = Math.max(maxScrollY, scrollY);
-              const revealRange = 400; // px to fully reveal
-              const raw = (effectiveScroll - card.revealPx) / revealRange;
+              // Reveal: use maxScrollY so cards never disappear once revealed
+              const vh = typeof window !== "undefined" ? window.innerHeight : 900;
+              const scrollPct = vh > 0 ? (maxScrollY / (vh * 1.5)) * 100 : 0;
+              const raw = (scrollPct - card.at) / 20;
               const reveal = Math.min(1, Math.max(0, raw));
-              // Diagonal reveal: top-left to bottom-right
               let clip: string;
               if (reveal <= 0) clip = "polygon(0 0,0 0,0 0)";
               else if (reveal >= 1) clip = "none";
               else if (reveal < 0.5) {
                 const p = reveal * 2;
-                clip = `polygon(0 0, ${p*100}% 0, 0 ${p*100}%)`;
+                clip = `polygon(0 0, ${p * 100}% 0, 0 ${p * 100}%)`;
               } else {
                 const p = (reveal - 0.5) * 2;
-                clip = `polygon(0 0, 100% 0, 100% ${p*100}%, ${p*100}% 100%, 0 100%)`;
+                clip = `polygon(0 0, 100% 0, 100% ${p * 100}%, ${p * 100}% 100%, 0 100%)`;
               }
               return (
                 <div key={i} style={{
-                  position:"absolute",left:card.left,top:card.top,width:card.w,aspectRatio:"5/7",
-                  background:`${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
-                  clipPath:clip,
-                  transform:`translateY(${-scrollY*card.spd}px)`,zIndex:2,overflow:"hidden",boxShadow:"0 4px 16px rgba(0,0,0,0.1)",
+                  position: "absolute", left: card.left, top: card.top, width: card.w, aspectRatio: "5/7",
+                  background: `${C.bg} url(${cardImages[card.imgIdx]}) center/contain no-repeat`,
+                  clipPath: clip, transition: "clip-path 0.6s cubic-bezier(0.4,0,0.2,1)",
+                  transform: `translateY(${-scrollY * card.spd}px)`, zIndex: 2, overflow: "hidden",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
                 }}>
                   <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:`holoShine ${3+(i%3)}s ease infinite`,opacity:0.25,pointerEvents:"none"}} />
                 </div>
@@ -296,7 +304,7 @@ export default function ProvaApp() {
 
         {/* ── Sub pages (QUIZ/TEST/REVIEW/MYPAGE) ── */}
         {!isHome && pgConf && (
-          <div style={{position:"relative",width:"100%",height:"280vh",overflow:"hidden"}}>
+          <div style={{position:"relative",width:"100%",height:"280vh"}}>
             {/* Background: 6 cards with real images + theme overlay */}
             {BG_POS.map((bp,i) => {
               const img = cardImages.length > 0 ? cardImages[i % cardImages.length] : null;
