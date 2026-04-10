@@ -243,7 +243,7 @@ export default function ProvaApp() {
 
         {/* HOME: scroll area with card grid (design.md §3) */}
         {isHome && (
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:"24px",padding:"24px",width:"100%",zIndex:2,position:"relative"}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:"48px",padding:"60px",width:"100%",zIndex:2,position:"relative"}}>
             {homeCardImages.map((imgUrl, i) => (
               <div key={i} style={{
                 aspectRatio:"63 / 88",
