@@ -7,6 +7,7 @@ import type { ExamResult } from "@/lib/types";
 export default function ExamResultPage() {
   const router = useRouter();
   const [result, setResult] = useState<ExamResult | null>(null);
+  const [isCommonTest, setIsCommonTest] = useState(false);
 
   useEffect(() => {
     const str = sessionStorage.getItem("exam_result");
@@ -15,6 +16,7 @@ export default function ExamResultPage() {
       return;
     }
     setResult(JSON.parse(str));
+    setIsCommonTest(sessionStorage.getItem("exam_difficulty") === "common");
   }, [router]);
 
   if (!result) {
@@ -101,7 +103,7 @@ export default function ExamResultPage() {
             }}
             className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
           >
-            {sessionStorage.getItem("exam_difficulty") === "common" ? "TEST に戻る" : "QUIZ に戻る"}
+            {isCommonTest ? "TEST に戻る" : "QUIZ に戻る"}
           </button>
         </div>
       </div>
