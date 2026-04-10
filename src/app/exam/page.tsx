@@ -301,7 +301,7 @@ export default function ProvaApp() {
           zIndex:1,pointerEvents:"none",userSelect:"none",
           fontFamily:"'Times New Roman',Times,serif",fontWeight:"normal",
           fontSize:"min(20vw,280px)",letterSpacing:"0.04em",textTransform:"uppercase",
-          color:"rgba(0,0,0,0.06)",lineHeight:0.85,whiteSpace:"nowrap",
+          color:C.text,lineHeight:0.85,whiteSpace:"nowrap",
         }}>Prova</div>
       )}
 
