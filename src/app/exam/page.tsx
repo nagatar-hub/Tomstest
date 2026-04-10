@@ -12,20 +12,23 @@ const C = {
   red: "#b91c1c", redBg: "#fef2f2", border: "#e8e3d9",
 };
 
-/* ── HOME: Card positions (spec §3) ── */
+/* ── HOME: Card positions (design.md §3) ── */
 const CARD_POSITIONS = [
-  { left: '2%',  top: '5vh',   w: '22%', rot: 3 },
-  { left: '26%', top: '10vh',  w: '26%', rot: -1 },
-  { left: '54%', top: '2vh',   w: '20%', rot: 2 },
-  { left: '76%', top: '8vh',   w: '23%', rot: -3 },
-  { left: '1%',  top: '60vh',  w: '25%', rot: -1 },
-  { left: '28%', top: '55vh',  w: '22%', rot: 2 },
-  { left: '52%', top: '62vh',  w: '24%', rot: -2 },
-  { left: '77%', top: '55vh',  w: '24%', rot: -2 },
-  { left: '0%',  top: '116vh', w: '23%', rot: -2 },
-  { left: '24%', top: '112vh', w: '28%', rot: 3 },
-  { left: '55%', top: '118vh', w: '18%', rot: -4 },
-  { left: '74%', top: '114vh', w: '25%', rot: 2 },
+  // Row 1（上段）
+  { left: '2%',  top: '5vh',   w: '18%', rot: 3 },
+  { left: '26%', top: '10vh',  w: '18%', rot: -1 },
+  { left: '52%', top: '3vh',   w: '16%', rot: 2 },
+  { left: '78%', top: '8vh',   w: '18%', rot: -3 },
+  // Row 2（中段）
+  { left: '3%',  top: '55vh',  w: '17%', rot: -1 },
+  { left: '28%', top: '50vh',  w: '18%', rot: 2 },
+  { left: '54%', top: '56vh',  w: '16%', rot: -2 },
+  { left: '78%', top: '52vh',  w: '17%', rot: -2 },
+  // Row 3（下段）
+  { left: '1%',  top: '105vh', w: '18%', rot: -2 },
+  { left: '26%', top: '100vh', w: '18%', rot: 3 },
+  { left: '53%', top: '108vh', w: '16%', rot: -4 },
+  { left: '77%', top: '103vh', w: '18%', rot: 2 },
 ];
 const ROW_SPEEDS = [0.3, 0.5, 0.4];
 function getSpeed(index: number): number {
@@ -245,13 +248,14 @@ export default function ProvaApp() {
   const thS:React.CSSProperties = {padding:"min(1vh,8px) min(1.2vw,12px)",textAlign:"left",fontSize:"min(1vw,9px)",fontWeight:600,color:C.textLight,letterSpacing:"0.08em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`};
   const tdS:React.CSSProperties = {padding:"min(1.1vh,9px) min(1.2vw,12px)",fontSize:"min(1.2vw,12px)",borderBottom:`1px solid ${C.border}22`};
 
-  // HOME: build 24 cards (Set A + Set B at +140vh) — spec §3
+  // HOME: build 24 cards (Set A + Set B at +140vh) — design.md §3
+  // Set A: images[0]〜[11], Set B: images[12]〜[23] (異なる画像)
   const homeCards = [
-    ...CARD_POSITIONS.map((pos, i) => ({ ...pos, imgUrl: cardImages[i] || null })),
+    ...CARD_POSITIONS.map((pos, i) => ({ ...pos, imgUrl: cardImages[i] ?? null })),
     ...CARD_POSITIONS.map((pos, i) => ({
       ...pos,
       top: `${parseFloat(pos.top) + 140}vh`,
-      imgUrl: cardImages[(i + 12) % Math.max(cardImages.length, 1)] || null,
+      imgUrl: cardImages[i + 12] ?? null,
     })),
   ];
 
@@ -278,7 +282,7 @@ export default function ProvaApp() {
               }}>
                 <div style={{
                   width:"100%",height:"100%",
-                  background: card.imgUrl ? `url(${card.imgUrl}) center/cover no-repeat` : "linear-gradient(145deg, #b45309, #ea580c)",
+                  background: card.imgUrl ? `url(${card.imgUrl}) center/cover no-repeat` : "transparent",
                 }} />
                 <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:"holoShine 4s ease infinite",opacity:0.2,pointerEvents:"none"}} />
               </div>
@@ -297,7 +301,7 @@ export default function ProvaApp() {
           zIndex:1,pointerEvents:"none",userSelect:"none",
           fontFamily:"'Times New Roman',Times,serif",fontWeight:"normal",
           fontSize:"min(20vw,280px)",letterSpacing:"0.04em",textTransform:"uppercase",
-          color:"rgba(255,255,255,0.08)",lineHeight:0.85,
+          color:"rgba(0,0,0,0.06)",lineHeight:0.85,whiteSpace:"nowrap",
         }}>Prova</div>
       )}
 
