@@ -12,58 +12,7 @@ const C = {
   red: "#b91c1c", redBg: "#fef2f2", border: "#e8e3d9",
 };
 
-/* ── HOME: Card position generator (design.md §3) ── */
-interface CardPosition { left: number; top: number; w: number; rot: number }
-
-function generateNonOverlappingPositions(
-  count: number,
-  areaWidth: number = 84,
-  areaHeight: number = 130,
-  cardMinW: number = 13,
-  cardMaxW: number = 17,
-): CardPosition[] {
-  const cards: CardPosition[] = [];
-  const maxAttempts = 500;
-
-  const getHeight = (w: number) => (w * 88) / 63;
-
-  const isOverlapping = (a: CardPosition, b: CardPosition): boolean => {
-    const margin = 2;
-    const aH = getHeight(a.w) * (100 / areaHeight);
-    const bH = getHeight(b.w) * (100 / areaHeight);
-
-    return !(
-      a.left + a.w + margin < b.left ||
-      b.left + b.w + margin < a.left ||
-      a.top + aH + margin < b.top ||
-      b.top + bH + margin < a.top
-    );
-  };
-
-  let attempts = 0;
-  while (cards.length < count && attempts < maxAttempts) {
-    const candidate: CardPosition = {
-      left: Math.random() * areaWidth,
-      top: Math.random() * areaHeight,
-      w: cardMinW + Math.random() * (cardMaxW - cardMinW),
-      rot: (Math.random() - 0.5) * 8,
-    };
-
-    const overlaps = cards.some(c => isOverlapping(c, candidate));
-    if (!overlaps) {
-      cards.push(candidate);
-    }
-    attempts++;
-  }
-
-  return cards;
-}
-
-function getSpeed(topVh: number): number {
-  if (topVh < 45) return 0.3;
-  if (topVh < 90) return 0.5;
-  return 0.4;
-}
+/* (HOME card layout: CSS grid — design.md §3) */
 
 /* ── Subpage BG card positions (6 cards, position:fixed) ── */
 const BG_POS = [
@@ -275,17 +224,10 @@ export default function ProvaApp() {
   const thS:React.CSSProperties = {padding:"min(1vh,8px) min(1.2vw,12px)",textAlign:"left",fontSize:"min(1vw,9px)",fontWeight:600,color:C.textLight,letterSpacing:"0.08em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`};
   const tdS:React.CSSProperties = {padding:"min(1.1vh,9px) min(1.2vw,12px)",fontSize:"min(1.2vw,12px)",borderBottom:`1px solid ${C.border}22`};
 
-  // HOME: generate 12 non-overlapping positions (once, via useState init)
-  const [cardPositions] = useState(() => generateNonOverlappingPositions(12));
-
-  // Build 24 cards: Set A + Set B (+140vh offset, different images)
-  const homeCards = [
-    ...cardPositions.map((pos, i) => ({ ...pos, imgUrl: cardImages[i] ?? null })),
-    ...cardPositions.map((pos, i) => ({
-      ...pos,
-      top: pos.top + 140,
-      imgUrl: cardImages[i + 12] ?? null,
-    })),
+  // HOME: card image list (Set A + Set B with different images)
+  const homeCardImages = [
+    ...cardImages.slice(0, 12),
+    ...cardImages.slice(12, 24),
   ];
 
   return (
@@ -299,25 +241,15 @@ export default function ProvaApp() {
       {/* ── Scroll container ── */}
       <div ref={containerRef} className="no-sb" style={{width:"100vw",height:"100vh",overflow:"auto",background:C.bg,position:"relative",fontFamily:"'IBM Plex Mono','Noto Sans JP',monospace",color:C.text}}>
 
-        {/* HOME: scroll area with cards (z-index:2 to be above title) */}
+        {/* HOME: scroll area with card grid (design.md §3) */}
         {isHome && (
-          <div style={{height:"400vh",position:"relative",zIndex:2}}>
-            {homeCards.map((card, i) => (
+          <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:"24px",padding:"24px",width:"100%",zIndex:2,position:"relative"}}>
+            {homeCardImages.map((imgUrl, i) => (
               <div key={i} style={{
-                position:"absolute",
-                left:`${card.left}%`,
-                top:`${card.top}vh`,
-                width:`${card.w}%`,
                 aspectRatio:"63 / 88",
-                transform:`rotate(${card.rot}deg) translateY(${-scrollY * getSpeed(card.top)}px)`,
-                overflow:"hidden",zIndex:0,
-              }}>
-                <div style={{
-                  width:"100%",height:"100%",
-                  background: card.imgUrl ? `url(${card.imgUrl}) center/cover no-repeat` : "transparent",
-                }} />
-                <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:"holoShine 4s ease infinite",opacity:0.2,pointerEvents:"none"}} />
-              </div>
+                overflow:"hidden",
+                background: imgUrl ? `url(${imgUrl}) center/cover no-repeat` : "transparent",
+              }} />
             ))}
           </div>
         )}
