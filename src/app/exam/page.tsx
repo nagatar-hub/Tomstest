@@ -62,11 +62,8 @@ export default function ProvaApp() {
   const [hoveredTab, setHoveredTab] = useState<string|null>(null);
   const [subBgSeed, setSubBgSeed] = useState(0);
   const [avatarHover, setAvatarHover] = useState(false);
-  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
-  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isHomeRef = useRef(true);
 
   // Data
@@ -151,37 +148,7 @@ export default function ProvaApp() {
     if (!isHome) setSubBgSeed(prev => prev + 1);
   }, [page, isHome]);
 
-  // 画像プリロード: 読み込み完了したらloadedImagesに追加
-  useEffect(() => {
-    homeCardImages.forEach((url, index) => {
-      if (!url) return;
-      const img = new Image();
-      img.onload = () => setLoadedImages(prev => new Set(prev).add(index));
-      img.src = url;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardImages]);
-
-  // IntersectionObserver: ビューポートに入ったらvisibleCardsに追加
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = Number((entry.target as HTMLElement).dataset.cardIndex);
-            setVisibleCards(prev => new Set(prev).add(index));
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.1 }
-    );
-    cardRefs.current.forEach((el) => { if (el) observer.observe(el); });
-    return () => observer.disconnect();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cardImages]);
-
-  const shouldReveal = (index: number) => loadedImages.has(index) && visibleCards.has(index);
+  // (Step 3で IntersectionObserver + React state によるリビールを追加予定)
 
   // Actions
   async function handleQuizStart() {
@@ -268,7 +235,6 @@ export default function ProvaApp() {
       <style>{`
         @keyframes holoShine{0%{background-position:-100% -100%}50%{background-position:200% 200%}100%{background-position:-100% -100%}}
         @keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-        @keyframes shutterIn{0%{clip-path:rect(auto auto 0% auto);transform:translateY(20%)}100%{clip-path:rect(auto auto 100% auto);transform:translateY(0px)}}
         .no-sb::-webkit-scrollbar{width:0}
       `}</style>
 
@@ -279,12 +245,10 @@ export default function ProvaApp() {
         {isHome && (
           <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:"64px",padding:"80px",width:"100%",zIndex:2,position:"relative"}}>
             {homeCardImages.map((imgUrl, i) => (
-              <div key={i} ref={el => { cardRefs.current[i] = el; }} data-card-index={i} style={{
+              <div key={i} style={{
                 aspectRatio:"63 / 88",
                 overflow:"hidden",
-                clipPath: shouldReveal(i) ? "rect(auto auto 100% auto)" : "rect(auto auto 0% auto)",
-                animation: shouldReveal(i) ? "shutterIn 1s cubic-bezier(0.77, 0, 0.175, 1) forwards" : "none",
-                background: loadedImages.has(i) ? `url(${imgUrl}) center/cover no-repeat` : "transparent",
+                background: imgUrl ? `url(${imgUrl}) center/cover no-repeat` : "transparent",
               }} />
             ))}
           </div>
