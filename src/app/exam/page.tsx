@@ -12,30 +12,57 @@ const C = {
   red: "#b91c1c", redBg: "#fef2f2", border: "#e8e3d9",
 };
 
-/* ── HOME: Card positions (design.md §3) ── */
-const CARD_POSITIONS = [
-  // Row 1（上段）
-  { left: '2%',  top: '5vh',   w: '18%', rot: 3 },
-  { left: '26%', top: '10vh',  w: '18%', rot: -1 },
-  { left: '52%', top: '3vh',   w: '16%', rot: 2 },
-  { left: '78%', top: '8vh',   w: '18%', rot: -3 },
-  // Row 2（中段）
-  { left: '3%',  top: '55vh',  w: '17%', rot: -1 },
-  { left: '28%', top: '50vh',  w: '18%', rot: 2 },
-  { left: '54%', top: '56vh',  w: '16%', rot: -2 },
-  { left: '78%', top: '52vh',  w: '17%', rot: -2 },
-  // Row 3（下段）
-  { left: '1%',  top: '105vh', w: '18%', rot: -2 },
-  { left: '26%', top: '100vh', w: '18%', rot: 3 },
-  { left: '53%', top: '108vh', w: '16%', rot: -4 },
-  { left: '77%', top: '103vh', w: '18%', rot: 2 },
-];
-const ROW_SPEEDS = [0.3, 0.5, 0.4];
-function getSpeed(index: number): number {
-  const i = index % 12;
-  if (i < 4) return ROW_SPEEDS[0];
-  if (i < 8) return ROW_SPEEDS[1];
-  return ROW_SPEEDS[2];
+/* ── HOME: Card position generator (design.md §3) ── */
+interface CardPosition { left: number; top: number; w: number; rot: number }
+
+function generateNonOverlappingPositions(
+  count: number,
+  areaWidth: number = 84,
+  areaHeight: number = 130,
+  cardMinW: number = 13,
+  cardMaxW: number = 17,
+): CardPosition[] {
+  const cards: CardPosition[] = [];
+  const maxAttempts = 500;
+
+  const getHeight = (w: number) => (w * 88) / 63;
+
+  const isOverlapping = (a: CardPosition, b: CardPosition): boolean => {
+    const margin = 2;
+    const aH = getHeight(a.w) * (100 / areaHeight);
+    const bH = getHeight(b.w) * (100 / areaHeight);
+
+    return !(
+      a.left + a.w + margin < b.left ||
+      b.left + b.w + margin < a.left ||
+      a.top + aH + margin < b.top ||
+      b.top + bH + margin < a.top
+    );
+  };
+
+  let attempts = 0;
+  while (cards.length < count && attempts < maxAttempts) {
+    const candidate: CardPosition = {
+      left: Math.random() * areaWidth,
+      top: Math.random() * areaHeight,
+      w: cardMinW + Math.random() * (cardMaxW - cardMinW),
+      rot: (Math.random() - 0.5) * 8,
+    };
+
+    const overlaps = cards.some(c => isOverlapping(c, candidate));
+    if (!overlaps) {
+      cards.push(candidate);
+    }
+    attempts++;
+  }
+
+  return cards;
+}
+
+function getSpeed(topVh: number): number {
+  if (topVh < 45) return 0.3;
+  if (topVh < 90) return 0.5;
+  return 0.4;
 }
 
 /* ── Subpage BG card positions (6 cards, position:fixed) ── */
@@ -248,13 +275,15 @@ export default function ProvaApp() {
   const thS:React.CSSProperties = {padding:"min(1vh,8px) min(1.2vw,12px)",textAlign:"left",fontSize:"min(1vw,9px)",fontWeight:600,color:C.textLight,letterSpacing:"0.08em",textTransform:"uppercase",borderBottom:`1px solid ${C.border}`};
   const tdS:React.CSSProperties = {padding:"min(1.1vh,9px) min(1.2vw,12px)",fontSize:"min(1.2vw,12px)",borderBottom:`1px solid ${C.border}22`};
 
-  // HOME: build 24 cards (Set A + Set B at +140vh) — design.md §3
-  // Set A: images[0]〜[11], Set B: images[12]〜[23] (異なる画像)
+  // HOME: generate 12 non-overlapping positions (once, via useState init)
+  const [cardPositions] = useState(() => generateNonOverlappingPositions(12));
+
+  // Build 24 cards: Set A + Set B (+140vh offset, different images)
   const homeCards = [
-    ...CARD_POSITIONS.map((pos, i) => ({ ...pos, imgUrl: cardImages[i] ?? null })),
-    ...CARD_POSITIONS.map((pos, i) => ({
+    ...cardPositions.map((pos, i) => ({ ...pos, imgUrl: cardImages[i] ?? null })),
+    ...cardPositions.map((pos, i) => ({
       ...pos,
-      top: `${parseFloat(pos.top) + 140}vh`,
+      top: pos.top + 140,
       imgUrl: cardImages[i + 12] ?? null,
     })),
   ];
@@ -275,9 +304,12 @@ export default function ProvaApp() {
           <div style={{height:"400vh",position:"relative",zIndex:2}}>
             {homeCards.map((card, i) => (
               <div key={i} style={{
-                position:"absolute",left:card.left,top:card.top,width:card.w,
+                position:"absolute",
+                left:`${card.left}%`,
+                top:`${card.top}vh`,
+                width:`${card.w}%`,
                 aspectRatio:"63 / 88",
-                transform:`rotate(${card.rot}deg) translateY(${-scrollY * getSpeed(i)}px)`,
+                transform:`rotate(${card.rot}deg) translateY(${-scrollY * getSpeed(card.top)}px)`,
                 overflow:"hidden",zIndex:0,
               }}>
                 <div style={{
