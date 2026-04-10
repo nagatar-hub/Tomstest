@@ -300,7 +300,7 @@ export default function ProvaApp() {
           position:"fixed",top:"50%",left:"50%",transform:"translate(-50%,-50%)",
           zIndex:1,pointerEvents:"none",userSelect:"none",
           fontFamily:"'Times New Roman',Times,serif",fontWeight:"normal",
-          fontSize:"min(20vw,280px)",letterSpacing:"0.04em",textTransform:"uppercase",
+          fontSize:"min(28vw,500px)",letterSpacing:"0.04em",textTransform:"uppercase",
           color:C.text,lineHeight:0.85,whiteSpace:"nowrap",
         }}>Prova</div>
       )}
