@@ -162,3 +162,14 @@
 .stagger-3 { animation-delay: 0.15s; }
 .stagger-4 { animation-delay: 0.2s; }
 .stagger-5 { animation-delay: 0.25s; }
+
+@keyframes shutterIn {
+  0% {
+    clip-path: rect(auto auto 0% auto);
+    transform: translateY(20%);
+  }
+  100% {
+    clip-path: rect(auto auto 100% auto);
+    transform: translateY(0px);
+  }
+}
