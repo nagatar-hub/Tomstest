@@ -526,10 +526,10 @@ export default function ProvaApp() {
             const hov = hoveredTab===tab.id;
             const label = active ? "HOME" : tab.l;
             const onClick = active ? ()=>setPage("home") : ()=>setPage(tab.id);
-            return <button key={tab.id} onClick={onClick} onMouseEnter={()=>setHoveredTab(tab.id)} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"10px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,background:active?C.text:hov?`${C.text}08`:C.bg,color:active?C.bg:C.text,transition:"all 0.15s"}}>{label}</button>;
+            return <button key={tab.id} onClick={onClick} onMouseEnter={()=>setHoveredTab(tab.id)} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"10px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1px solid ${C.text}`,background:(active||hov)?C.text:"#fff",color:(active||hov)?"#fff":C.text,transition:"all 0.2s ease"}}>{label}</button>;
           })}
         </div>
-        <button onClick={()=>setPage(page==="mypage"?"home":"mypage")} onMouseEnter={()=>setHoveredTab("mypage")} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"10px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1.5px solid ${C.text}`,background:page==="mypage"?C.text:hoveredTab==="mypage"?`${C.text}08`:C.bg,color:page==="mypage"?C.bg:C.text,transition:"all 0.15s",position:"relative",pointerEvents:"auto"}}>
+        <button onClick={()=>setPage(page==="mypage"?"home":"mypage")} onMouseEnter={()=>setHoveredTab("mypage")} onMouseLeave={()=>setHoveredTab(null)} style={{padding:"10px 20px",fontSize:11,fontWeight:700,fontFamily:"'IBM Plex Mono',monospace",letterSpacing:"0.06em",cursor:"pointer",border:`1px solid ${C.text}`,background:(page==="mypage"||hoveredTab==="mypage")?C.text:"#fff",color:(page==="mypage"||hoveredTab==="mypage")?"#fff":C.text,transition:"all 0.2s ease",position:"relative",pointerEvents:"auto"}}>
           {page==="mypage"?"HOME":"MY PAGE"}
           {page!=="mypage"&&announcements.length>0 && <div style={{position:"absolute",top:-7,right:-7,width:18,height:18,borderRadius:"50%",background:C.red,color:"#fff",fontSize:10,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",animation:"badgePulse 2s ease infinite"}}>{announcements.length}</div>}
         </button>
