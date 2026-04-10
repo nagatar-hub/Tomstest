@@ -92,23 +92,16 @@ export default function ExamResultPage() {
         <div className="mt-6 space-y-3">
           <button
             onClick={() => {
+              const diff = sessionStorage.getItem("exam_difficulty");
+              const isCommon = diff === "common";
               sessionStorage.removeItem("exam");
               sessionStorage.removeItem("exam_result");
               sessionStorage.removeItem("exam_difficulty");
-              router.push("/exam");
+              router.push(isCommon ? "/exam#test" : "/exam#quiz");
             }}
             className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
           >
-            もう一度テスト
-          </button>
-          <button
-            onClick={() => {
-              sessionStorage.clear();
-              router.push("/");
-            }}
-            className="w-full py-2 text-gray-500 text-sm hover:text-gray-700"
-          >
-            ログアウト
+            {sessionStorage.getItem("exam_difficulty") === "common" ? "TEST に戻る" : "QUIZ に戻る"}
           </button>
         </div>
       </div>
