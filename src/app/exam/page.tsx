@@ -278,9 +278,7 @@ export default function ProvaApp() {
               }}>
                 <div style={{
                   width:"100%",height:"100%",
-                  backgroundImage: card.imgUrl ? `url(${card.imgUrl})` : undefined,
-                  backgroundSize:"cover",backgroundPosition:"center",
-                  background: card.imgUrl ? undefined : "linear-gradient(145deg, #b45309, #ea580c)",
+                  background: card.imgUrl ? `url(${card.imgUrl}) center/cover no-repeat` : "linear-gradient(145deg, #b45309, #ea580c)",
                 }} />
                 <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,transparent 30%,rgba(255,255,255,0.3) 50%,transparent 70%)",backgroundSize:"300% 300%",animation:"holoShine 4s ease infinite",opacity:0.2,pointerEvents:"none"}} />
               </div>
@@ -317,9 +315,7 @@ export default function ProvaApp() {
               }}>
                 <div style={{
                   width:"100%",height:"100%",
-                  backgroundImage: img ? `url(${img})` : undefined,
-                  backgroundSize:"cover",backgroundPosition:"center",
-                  background: img ? undefined : pgConf.overlay,
+                  background: img ? `url(${img}) center/cover no-repeat` : pgConf.overlay,
                 }} />
                 {img && <div style={{position:"absolute",inset:0,background:pgConf.overlay,pointerEvents:"none"}} />}
               </div>
