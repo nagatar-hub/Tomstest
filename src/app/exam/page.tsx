@@ -169,30 +169,7 @@ export default function ProvaApp() {
     if (!isHome) setSubBgSeed(prev => prev + 1);
   }, [page, isHome]);
 
-  // HOME: IntersectionObserver for diagonal reveal (spec §7)
-  useEffect(() => {
-    if (!isHome) return;
-    const root = containerRef.current;
-    if (!root) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { root, threshold: 0.1 }
-    );
-    const setup = () => {
-      const cards = root.querySelectorAll('.card-reveal:not(.visible)');
-      cards.forEach((el) => observer.observe(el));
-    };
-    // Initial setup + re-setup when images load
-    const timer = setTimeout(setup, 50);
-    return () => { clearTimeout(timer); observer.disconnect(); };
-  }, [isHome, cardImages]);
+  // (Step 3で IntersectionObserver + React state によるリビールを追加予定)
 
   // Actions
   async function handleQuizStart() {
@@ -283,13 +260,6 @@ export default function ProvaApp() {
       <style>{`
         @keyframes holoShine{0%{background-position:-100% -100%}50%{background-position:200% 200%}100%{background-position:-100% -100%}}
         @keyframes badgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-        @keyframes diagonalReveal{
-          0%{clip-path:polygon(0 0,0 0,0 0,0 0);opacity:0}
-          10%{opacity:1}
-          100%{clip-path:polygon(0 0,100% 0,100% 100%,0 100%)}
-        }
-        .card-reveal{clip-path:polygon(0 0,0 0,0 0,0 0)}
-        .card-reveal.visible{animation:diagonalReveal 0.8s cubic-bezier(0.77,0,0.175,1) forwards}
         .no-sb::-webkit-scrollbar{width:0}
       `}</style>
 
@@ -300,7 +270,7 @@ export default function ProvaApp() {
         {isHome && (
           <div style={{height:"400vh",position:"relative",zIndex:2}}>
             {homeCards.map((card, i) => (
-              <div key={i} className="card-reveal" style={{
+              <div key={i} style={{
                 position:"absolute",left:card.left,top:card.top,width:card.w,
                 aspectRatio:"63 / 88",
                 transform:`rotate(${card.rot}deg) translateY(${-scrollY * getSpeed(i)}px)`,
