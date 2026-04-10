@@ -171,7 +171,9 @@ export default function ProvaApp() {
 
   // HOME: IntersectionObserver for diagonal reveal (spec §7)
   useEffect(() => {
-    if (!isHome || cardImages.length === 0) return;
+    if (!isHome) return;
+    const root = containerRef.current;
+    if (!root) return;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -181,12 +183,14 @@ export default function ProvaApp() {
           }
         });
       },
-      { threshold: 0.1 }
+      { root, threshold: 0.1 }
     );
-    // Wait for DOM to render cards
-    const timer = setTimeout(() => {
-      document.querySelectorAll('.card-reveal').forEach((el) => observer.observe(el));
-    }, 100);
+    const setup = () => {
+      const cards = root.querySelectorAll('.card-reveal:not(.visible)');
+      cards.forEach((el) => observer.observe(el));
+    };
+    // Initial setup + re-setup when images load
+    const timer = setTimeout(setup, 50);
     return () => { clearTimeout(timer); observer.disconnect(); };
   }, [isHome, cardImages]);
 
