@@ -66,6 +66,7 @@ export default function ProvaApp() {
   const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isHomeRef = useRef(true);
 
   // Data
@@ -245,6 +246,28 @@ export default function ProvaApp() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardImages]);
 
+  // IntersectionObserver: ビューポートに入ったらvisibleCardsに追加
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number((entry.target as HTMLElement).dataset.cardIndex);
+            setVisibleCards(prev => new Set(prev).add(index));
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    cardRefs.current.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <style>{`
@@ -260,7 +283,7 @@ export default function ProvaApp() {
         {isHome && (
           <div style={{display:"grid",gridTemplateColumns:"repeat(4, 1fr)",gap:"64px",padding:"80px",width:"100%",zIndex:2,position:"relative"}}>
             {homeCardImages.map((imgUrl, i) => (
-              <div key={i} style={{
+              <div key={i} ref={el => { cardRefs.current[i] = el; }} data-card-index={i} style={{
                 aspectRatio:"63 / 88",
                 overflow:"hidden",
                 background: imgUrl ? `url(${imgUrl}) center/cover no-repeat` : "transparent",
