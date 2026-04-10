@@ -62,6 +62,8 @@ export default function ProvaApp() {
   const [hoveredTab, setHoveredTab] = useState<string|null>(null);
   const [subBgSeed, setSubBgSeed] = useState(0);
   const [avatarHover, setAvatarHover] = useState(false);
+  const [loadedImages, setLoadedImages] = useState<Set<number>>(new Set());
+  const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const isHomeRef = useRef(true);
@@ -229,6 +231,19 @@ export default function ProvaApp() {
     ...cardImages.slice(0, 12),
     ...cardImages.slice(12, 24),
   ];
+
+  // 画像プリロード: 読み込み完了したらloadedImagesに追加
+  useEffect(() => {
+    homeCardImages.forEach((url, index) => {
+      if (!url) return;
+      const img = new Image();
+      img.onload = () => {
+        setLoadedImages(prev => new Set(prev).add(index));
+      };
+      img.src = url;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardImages]);
 
   return (
     <>
